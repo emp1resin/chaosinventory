@@ -1,3 +1,5 @@
+import { emptyGolem } from '../data/golem';
+
 var initialState = {
 	typoOfThings: 'Перчатки',
 	race: 'Человек',
@@ -13,6 +15,7 @@ var initialState = {
 	clansArtMask: 0,
 	clanPosition: 100,
 	clanGlory: 0,
+	golem: { ...emptyGolem },
 	religion: 'Нет',
 	religionData: false,
 	profession: 'Нет',
@@ -348,6 +351,7 @@ const postReducer = (state = initialState, action) => {
 			charBless: 'Нет',
 			lifeBless: 'Нет',
 			turnireRune: false,
+			golem: { ...emptyGolem },
 		};
 	}
 
@@ -365,6 +369,7 @@ const postReducer = (state = initialState, action) => {
 		clansArtMask: clansArtMask(state.clansArtMask, action),
 		clanPosition: clanPosition(state.clanPosition, action),
 		clanGlory: clanGlory(state.clanGlory, action),
+		golem: golem(state.golem, action),
 		religionData: religionData(state.religionData, action),
 		religion: religion(state.religion, action),
 		profession: profession(state.profession, action),
@@ -1034,6 +1039,13 @@ function clan(state = [], action) {
 	}else {
 		return state
 	}
+}
+
+function golem(state = emptyGolem, action) {
+	if (action.type === 'Смена голема') return { ...state, ...action.data };
+	if (action.type === 'Загрузка персонажа') return { ...emptyGolem };
+	if (action.type === 'Загрузить все данные игрока') return { ...emptyGolem, ...action.data.golem };
+	return state;
 }
 
 function clanGlory(state = [], action) {
@@ -1860,7 +1872,8 @@ function get_n_points(p) {
 		points = 0
 	} else if (p === 1) {
 		points = 3
-	} else if (p === 2) {
+	} else if (p === 2 || p === 3) {
+		// FAQ describes Grandmaster effects but does not publish an extra point cost.
 		points = 3 + 7
 	}
 	
@@ -1876,7 +1889,7 @@ function allSkillsNeedPoints(state = [], action) {
 		points = 0
 	} else if (action.data === '1') {
 		points = 3
-	} else if (action.data === '2') {
+	} else if (action.data === '2' || action.data === '3') {
 		points = 3 + 7
 	}
 

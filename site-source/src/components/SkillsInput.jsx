@@ -49,7 +49,8 @@ class SkillsInput extends React.Component {
 								  	secondName={skill.secondName} 
 									contentNoob={skill.contentNoob} 
 								  	contentExpert={skill.contentExpert} 
-								  	contentMaster={skill.contentMaster} 
+									contentMaster={skill.contentMaster}
+									contentGrandmaster={skill.contentGrandmaster}
 								  	skillId={skill.id} typeNeed={props.type} 
 								  	type={skill.type}/>
 					  )}
@@ -68,7 +69,8 @@ class SkillsInput extends React.Component {
 		return(
 			<div>
 				<h3>Навыки</h3>
-			 	<FreePointsSkills/>
+				<FreePointsSkills/>
+				<p className="skill-faq-note">Грандмастер доступен у четырёх навыков. FAQ не указывает дополнительные затраты очков на этот ранг; в счётчике он пока равен рангу «Мастер».</p>
 			 	<div className='row mt-1 mb-1'>
 			 		<div className='col '>
 						<div className="input-group mb-3">

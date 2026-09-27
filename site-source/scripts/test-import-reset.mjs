@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { createServer } from 'vite';
+import { golemSupportPercent } from '../src/data/golem.js';
 
 const server = await createServer({ server: { middlewareMode: true }, appType: 'custom' });
 try {
@@ -25,6 +26,9 @@ try {
   first = reducer(first, { type: 'Изменить Руна правителей', data: 1 });
   first = reducer(first, { type: 'Изменить Турнирная руна' });
   first = reducer(first, { type: 'Смена Блага Жизни', data: '3' });
+  first = reducer(first, { type: 'Смена голема', data: { type: 'Золотой', mode: 'Поддержка' } });
+  assert.equal(golemSupportPercent(first.golem), 5.5);
+  first = reducer(first, { type: 'Изменить мастерство навыка Магия стихий', data: 3 });
   const previousEquipment = first.thingOnPers;
   const previousModifiers = first.modifireThings;
   const previousSkills = first.allSkills;
@@ -36,11 +40,20 @@ try {
   assert.equal(second.turnireRune, false);
   assert.equal(second.lifeBless, 'Нет');
   assert.equal(second.charBless, 'Нет');
+  assert.equal(second.golem.type, 'Нет');
+  assert.equal(second.allSkillsMaster.elementSkills, 0);
   assert.notStrictEqual(second.thingOnPers, previousEquipment);
   assert.notStrictEqual(second.modifireThings, previousModifiers);
   assert.notStrictEqual(second.allSkills, previousSkills);
   assert.equal(first.clansArtRune, 1);
   assert.equal(first.turnireRune, true);
+  assert.equal(first.golem.type, 'Золотой');
+
+  const saved = reducer(second, { type: 'Загрузить все данные игрока', data: first });
+  assert.equal(golemSupportPercent(saved.golem), 5.5);
+  assert.equal(saved.allSkillsMaster.elementSkills, 3);
+  const olderSave = reducer(saved, { type: 'Загрузить все данные игрока', data: { ...first, golem: undefined } });
+  assert.equal(olderSave.golem.type, 'Нет');
 
   const ranger = avatar('Рейнджер');
   ranger.out.clan = 'Наблюдатели';

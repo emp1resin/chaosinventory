@@ -558,9 +558,6 @@ class InputNameForFinding extends React.Component {
 				<Button variant = "contained" color = "primary"
 					onClick = {() => this.giveDataByName(this.state.name)}>
 					<CloudUploadIcon style = {{marginRight: 15}}/>Загрузить </Button>
-				<Typography variant="caption" component="p" style={{marginTop: 8, maxWidth: 440}}>
-					После загрузки укажите навыки, мастерство, клановые артефакты, турнирную руну и благословения вручную. Активные эликсиры API не возвращает; в расчёт они не включены.
-				</Typography>
 
 			</div> 
 			<div className = 'col-xl-3 col-lg-4 col-md-5  col-sm-8 col-6' >
@@ -590,8 +587,11 @@ class InputNameForFinding extends React.Component {
 						onClick = {() => this.openDrawersResults()}> Результаты </Button>
 
 
-			</div> 
-			<div className = 'col-12'
+			</div>
+			<Typography variant="caption" component="p" className="toolbar-hint">
+				После загрузки укажите навыки, клановые артефакты и благословения вручную. Эликсиры пока не включены в расчёт.
+			</Typography>
+			<div className = 'col-12 toolbar-status'
 			style = {
 				{
 					height: 5

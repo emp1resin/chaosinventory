@@ -24,6 +24,7 @@ class TooltipsSkillsInfo extends React.Component {
 					<p className='text-left' style={{whiteSpace: 'pre-line'}}><strong>Новичок:</strong> {this.props.contentNoob}</p>
 					<p className='text-left' style={{whiteSpace: 'pre-line'}}><strong>Эксперт:</strong> {this.props.contentExpert}</p>
 					<p className='text-left' style={{whiteSpace: 'pre-line'}}><strong>Мастер:</strong> {this.props.contentMaster}</p>
+					{this.props.contentGrandmaster && <p className='text-left' style={{whiteSpace: 'pre-line'}}><strong>Грандмастер:</strong> {this.props.contentGrandmaster}</p>}
 				</ReactTooltip>
 			</>
 		)

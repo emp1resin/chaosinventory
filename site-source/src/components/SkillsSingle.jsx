@@ -104,7 +104,8 @@ class SkillsSingle extends React.Component {
 									secondName={this.props.secondName} 
 									contentNoob={this.props.contentNoob} 
 									contentExpert={this.props.contentExpert} 
-									contentMaster={this.props.contentMaster}/>
+									contentMaster={this.props.contentMaster}
+									contentGrandmaster={this.props.contentGrandmaster}/>
 							</label>
 						  </div>
 						<input type="number" min={0} max={40} value={pointThisSkills}  className="form-control" onChange={evt => this.updateInputValue(evt)} />
@@ -113,6 +114,7 @@ class SkillsSingle extends React.Component {
 							<option value="0">Новичок</option>
 							<option value="1">Эксперт</option>
 							<option value="2">Мастер</option>
+							{this.props.contentGrandmaster && <option value="3">Грандмастер</option>}
 						  </select>
 						<input type="text" disabled value={getPointsCount(pointThisSkills) + pointNeededForThisSkills}  className="form-control" />
 

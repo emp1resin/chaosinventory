@@ -11,6 +11,7 @@ import FormHelperText from '@material-ui/core/FormHelperText';
 import FormControl from '@material-ui/core/FormControl';
 import Select from '@material-ui/core/Select';
 import { hasReligionBonuses, sanitizeReligionData } from '../data/religions';
+import { emptyGolem, golemSupportPercent } from '../data/golem';
 
 
 import { Tooltip as ReactTooltip } from 'react-tooltip';
@@ -185,6 +186,9 @@ class CharInput extends React.Component {
 		});
 
 	}
+	changeGolem(field, value) {
+		this.props.dispatch({type: 'Смена голема', data: {[field]: value}});
+	}
 	render() {
 		
 //		console.log(this.state.religionsList)
@@ -259,6 +263,8 @@ class CharInput extends React.Component {
 		// Выбрана ли профессия
 		var professionEnable = this.props.profession !== 'Нет';
 		var clanEnable = this.props.clan !== 'Нет';
+		const golem = this.props.golem || emptyGolem;
+		const supportBonus = golemSupportPercent(golem);
 		
 //		console.log(this.state.clansList)
 
@@ -546,7 +552,31 @@ class CharInput extends React.Component {
 						</FormControl>
 					</div>
 				</div>
-				
+				<details className="golem-config">
+					<summary>Спутник-голем: {golem.type === 'Нет' ? 'не выбран' : `${golem.type} · ${golem.mode}`}{supportBonus > 0 ? ` · +${supportBonus}%` : ''}</summary>
+					<p>Параметры голема укажите вручную: профиль персонажа пока не передаёт их в примерочную.</p>
+					<div className="golem-controls-grid">
+						<FormControl fullWidth>
+							<InputLabel>Тип голема</InputLabel>
+							<Select value={golem.type} onChange={(e) => this.props.dispatch({type: 'Смена голема', data: {type: e.target.value, mode: e.target.value === 'Нет' ? 'Нет' : golem.mode}})}>
+								{['Нет', 'Бронзовый', 'Железный', 'Золотой', 'Мифрильный'].map(type => <MenuItem key={type} value={type}>{type}</MenuItem>)}
+							</Select>
+						</FormControl>
+						{golem.type !== 'Нет' && <>
+							<FormControl fullWidth>
+								<InputLabel>Режим</InputLabel>
+								<Select value={golem.mode} onChange={(e) => this.changeGolem('mode', e.target.value)}>
+									{['Нет', 'Сражение', 'Добыча', 'Поддержка', 'Ремонт'].map(mode => <MenuItem key={mode} value={mode}>{mode}</MenuItem>)}
+								</Select>
+							</FormControl>
+							<TextField label="Уровень голема" type="number" value={golem.level} inputProps={{min: 1, max: 100}} onChange={(e) => this.changeGolem('level', e.target.value)} />
+							<TextField label="Энергия" type="number" value={golem.energy} inputProps={{min: 0}} onChange={(e) => this.changeGolem('energy', e.target.value)} />
+							<TextField label="Овердрайв" type="number" value={golem.overdrive} inputProps={{min: 0}} onChange={(e) => this.changeGolem('overdrive', e.target.value)} />
+						</>}
+					</div>
+					<p className="golem-formula">Предварительный расчёт поддержки: 5% от базовых параметров; золотой голем усиливает этот бонус на 10% — до 5,5% при уровне 1, энергии 1–9 и нулевом овердрайве. Рост уровня, энергии и овердрайва сложен от базовых 5%. При нуле энергии бонус отсутствует.</p>
+				</details>
+
 			</div>
 		)
 	};
@@ -572,6 +602,7 @@ const mapStateToProps = (state) => {
 		fractionReputation: state.fractionReputation,
 		charBless: state.charBless,
 		lifeBless: state.lifeBless,
+		golem: state.golem,
     }
 }
 

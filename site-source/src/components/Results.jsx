@@ -21,6 +21,7 @@ import Badge from '@material-ui/core/Badge';
 import { Grid } from '@material-ui/core';
 import { findBreachRune } from '../data/breachRunes';
 import { hasReligionBonuses, sanitizeReligionData } from '../data/religions';
+import { golemSupportPercent } from '../data/golem';
 
 export class Result extends React.Component {
 	
@@ -4097,6 +4098,29 @@ export class Result extends React.Component {
 		
 		stability *= 1+koeffClansGlory
 
+		// Provisional Support bonus. The FAQ specifies efficiency increases but not
+		// their exact stacking or rounding with other character effects.
+		const golemSupport = golemSupportPercent(this.props.golem);
+		if (golemSupport > 0) {
+			const supportMultiplier = 1 + golemSupport / 100;
+			minDamage *= supportMultiplier;
+			maxDamage *= supportMultiplier;
+			atack *= supportMultiplier;
+			defense *= supportMultiplier;
+			armor *= supportMultiplier;
+			HP *= supportMultiplier;
+			MP *= supportMultiplier;
+			pointsOfAction *= supportMultiplier;
+			resists *= supportMultiplier;
+			criticalDamage *= supportMultiplier;
+			stability *= supportMultiplier;
+			parry *= supportMultiplier;
+			reaction *= supportMultiplier;
+			armorPenetration *= supportMultiplier;
+			regenerationHP *= supportMultiplier;
+			regenerationMP *= supportMultiplier;
+		}
+
 
 		// Считаем бафы от меток (снайпер и застрельщик навыки)
 
@@ -4726,6 +4750,7 @@ export class Result extends React.Component {
 							
 							{this.props.clan !== 'Нет' && (this.props.clanGlory == null || this.props.clanPosition == null) &&
 								<p style={{margin: 0, color: '#b45f14'}}><b>Клановая слава не рассчитана:</b> укажите славу и позицию в разделе персонажа.</p>}
+							{golemSupport > 0 && <p style={{margin: 0}}><b>Голем, Поддержка:</b> +{golemSupport}% к основным параметрам (предварительный расчёт).</p>}
 							{this.props.clanGlory > 0 && this.props.clanPosition != null && <>
 								<Divider style={{marginTop: 5, marginBottom: 5}} variant="middle" />
 								<p style={{margin: 0}}><b>Клановая слава:</b> {this.props.clanGlory}% · позиция {this.props.clanPosition} · применяется {(koeffClansGlory * 100).toFixed(2)}%</p>
@@ -4836,6 +4861,7 @@ const mapStateToProps = (state) => {
 		runesChange: state.runesChange,
 		charBless: state.charBless,
 		lifeBless: state.lifeBless,
+		golem: state.golem,
 
     }
 }

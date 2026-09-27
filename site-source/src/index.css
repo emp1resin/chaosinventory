@@ -1,9 +1,9 @@
 :root {
-  color: #e8edf7;
-  background: #080c17;
+  color: #203850;
+  background: #c5c9ce;
   font-family: Roboto, system-ui, sans-serif;
   font-synthesis: none;
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 * { box-sizing: border-box; }
@@ -18,10 +18,8 @@ body {
   margin: 0;
   min-height: 100vh;
   overflow-x: hidden;
-  background:
-    radial-gradient(circle at 12% -10%, rgba(91, 120, 255, .22), transparent 28rem),
-    radial-gradient(circle at 90% 5%, rgba(36, 196, 163, .12), transparent 25rem),
-    #080c17;
+  background: #c5c9ce !important;
+  color: #203850;
 }
 
 #root {
