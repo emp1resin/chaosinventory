@@ -29,6 +29,7 @@ import SwipeableDrawer from '@material-ui/core/SwipeableDrawer';
 
 import Results from './Results';
 import allItems from './ItemsAll';
+import { resolveEquippedItems } from '../data/resolveEquipment';
 import { fetchGameJson, fetchOptionalGameJson } from '../data/gameApi';
 
 
@@ -322,20 +323,6 @@ function IntegrationAutosuggest(props) {
 	);
 };
 
-// id вещей оригинальные, для сетов солнца и некоторых других
-var sets_data = {}
-sets_data['Стихия'] = ['1194', '1195', '1196', '1197', '1198', '1199', '1200', '1201', '1202', '1203', '1224', '1225', '1226', '1227', '1228', '1229', '1230', '1231', '1232', '1233', '1254', '1255', '1256', '1257', '1258', '1259', '1260', '1261', '1262', '1263']
-sets_data['Тьма'] = ['1214', '1215', '1216', '1217', '1218', '1219', '1220', '1221', '1222', '1223', '1244', '1245', '1246', '1247', '1248', '1249', '1250', '1251', '1252', '1253', '1274', '1275', '1276', '1277', '1278', '1279', '1280', '1281', '1282', '1283']
-sets_data['Свет'] = ['1204', '1205', '1206', '1207', '1208', '1209', '1210', '1211', '1212', '1213', '1234', '1235', '1236', '1237', '1238', '1239', '1240', '1241', '1242', '1243', '1264', '1265', '1266', '1267', '1268', '1269', '1270', '1271', '1272', '1273']
-
-sets_data['Сила'] = ['1284', '1285', '1286', '1287', '1288', '1289', '1290', '1291', '1292', '1293', '1294', '1295', '1296', '1297', '1298', '1299', '1332', '1333', '1334', '1335', '1336', '1337', '1338', '1339', '1340', '1341', '1342', '1343', '1344', '1345', '1346', '1347', '1380', '1381', '1382', '1383', '1384', '1385', '1386', '1387', '1388', '1389', '1390', '1391', '1392', '1393', '1394', '1395']
-
-
-sets_data['Тело'] = ['1300', '1301', '1302', '1303', '1304', '1305', '1306', '1307', '1308', '1309', '1310', '1311', '1312', '1313', '1314', '1315', '1348', '1349', '1350', '1351', '1352', '1353', '1354', '1355', '1356', '1357', '1358', '1359', '1360', '1361', '1362', '1363', '1396', '1397', '1398', '1399', '1400', '1401', '1402', '1403', '1404', '1405', '1406', '1407', '1408', '1409', '1410', '1411']
-
-sets_data['Ловкость'] = ['1316', '1317', '1318', '1319', '1320', '1321', '1322', '1323', '1324', '1325', '1326', '1327', '1328', '1329', '1330', '1331', '1364', '1365', '1366', '1367', '1368', '1369', '1370', '1371', '1372', '1373', '1374', '1375', '1376', '1377', '1378', '1379', '1412', '1413', '1414', '1415', '1416', '1417', '1418', '1419', '1420', '1421', '1422', '1423', '1424', '1425', '1426', '1427']
-
-
 class InputNameForFinding extends React.Component {
 
 	constructor(props) {
@@ -366,21 +353,6 @@ class InputNameForFinding extends React.Component {
 		fetchGameJson(`https://chaosage.space/getAvatarsDataByName?name=${encodeURIComponent(x.trim())}`)
 			.then((jsonData) => {
 				if (!jsonData.out) throw new Error('Персонаж не найден.');
-
-				for (var i in jsonData.out.things) {
-
-
-					for (var j = 0; j < allItems.length; j++) {
-
-						if (allItems[j].name === jsonData.out.things[i]) {
-							jsonData.out.things[i] = allItems[j]
-							break
-						}
-					}
-
-				}
-
-				//			console.log(jsonData)
 
 				var urls = [
 					  "https://chaosage.space/religionAndClansData",
@@ -451,79 +423,13 @@ class InputNameForFinding extends React.Component {
 							.then(items => Promise.all(items.map(normalizeBreachRune)))
 							.then(result => {
 
-								// перебираем вещи, чтобы присвоить некоторые особые значения для сетов солнца
-//								console.log('Вещи, которые мы выгрузили', result)
-//								// Для начала заполним список оригинальных Id вещей (так как в игре сломалась страничка персонажа)
-//								for (var i_ in result) {
-//									
-//									if (result[i_].original_id) {
-//										console.log(result[i_].original_id)
-//									}
-//									
-//								}
-								for (var i_ in result) {
-									// Сеты Солнца на мага
-									if ((result[i_].set == '23') || ((result[i_].set == '24')) || ((result[i_].set == '25'))) {
-										//										
-										// перебираем имена вещей на персонаже
-										for (var i in jsonData.out.things) {
-
-											// 
-											if (jsonData.out.things[i] == result[i_].name.split('(')[0]) {
-
-												if (sets_data['Стихия'].includes(result[i_].original_id)) {
-													jsonData.out.things[i] += ' Стихия'
-												} else if (sets_data['Тьма'].includes(result[i_].original_id)) {
-													jsonData.out.things[i] += ' Тьма'
-												} else if (sets_data['Свет'].includes(result[i_].original_id)) {
-													jsonData.out.things[i] += ' Свет'
-												}
-
-												for (var j = 0; j < allItems.length; j++) {
-
-													if (allItems[j].name === jsonData.out.things[i]) {
-														jsonData.out.things[i] = allItems[j]
-														break
-													}
-												}
-											}
-
-
-
-										}
-
-									} else if ((result[i_].set == '26') || ((result[i_].set == '27')) || ((result[i_].set == '28'))) {
-										//										
-										// перебираем имена вещей на персонаже
-										for (var i in jsonData.out.things) {
-
-											// 
-											if (jsonData.out.things[i] == result[i_].name.split('(')[0]) {
-
-												if (sets_data['Сила'].includes(result[i_].original_id)) {
-													jsonData.out.things[i] += ' Сила'
-												} else if (sets_data['Ловкость'].includes(result[i_].original_id)) {
-													jsonData.out.things[i] += ' Ловкость'
-												} else if (sets_data['Тело'].includes(result[i_].original_id)) {
-													jsonData.out.things[i] += ' Тело'
-												}
-
-												for (var j = 0; j < allItems.length; j++) {
-
-													if (allItems[j].name === jsonData.out.things[i]) {
-														jsonData.out.things[i] = allItems[j]
-														break
-													}
-												}
-											}
-
-
-
-										}
-
-									}
+								// Resolve every equipped slot by its FAQ ID. The profile name is
+								// display text and can refer to several different items.
+								const { resolved, missing } = resolveEquippedItems(jsonData.out.things, result, allItems)
+								if (missing.length) {
+									throw new Error(`Нет базовых вещей в каталоге: ${missing.map(item => `${item.name} (#${item.originalId})`).join(', ')}`)
 								}
-								//								console.log('Вещи на выходе', result)
+								jsonData.out.things = resolved
 								this.setState({
 									loading: false
 								});

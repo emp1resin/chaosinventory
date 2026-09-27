@@ -126,6 +126,7 @@
 .MuiInput-underline:hover:before { border-bottom-color: #8d9cba !important; }
 .MuiSelect-icon, .MuiSvgIcon-root { color: #bdc8dc !important; }
 .MuiButton-containedPrimary { background: linear-gradient(135deg, #627bff, #7558e8) !important; }
+.MuiBadge-badge.MuiBadge-colorPrimary { color: #fff !important; }
 .MuiPaper-root { background-color: #11192b !important; color: #e8edf7 !important; }
 .MuiDivider-root { background-color: #2f3b56 !important; }
 .MuiTableCell-root { color: #e8edf7 !important; border-bottom-color: #34415d !important; }
