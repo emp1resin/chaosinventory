@@ -139,7 +139,6 @@ export class ItemsList extends React.Component {
 			? equipped : this.emptyThingInFocus;
 		this.setState({
 			thingInFoxus,
-			seeItem: 'Описание',
 			typeThing: (this.state.weaponRight || this.state.weaponLeft)
 				? thingInFoxus.kindOfThing || this.state.typeThing : this.state.typeThing,
 		});
@@ -747,7 +746,7 @@ export class ItemsList extends React.Component {
 					</div>
 					
 					<div className='col'>
-						<ItemInfoSystem type={type} thingInFoxus={this.state.thingInFoxus}/>
+						<ItemInfoSystem key={this.props.loadedPerson} type={type} thingInFoxus={this.state.thingInFoxus}/>
 				
 						
 					</div>

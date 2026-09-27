@@ -12,7 +12,6 @@ try {
   list.setState = change => { list.state = { ...list.state, ...change }; };
   list.componentDidUpdate({ loadedPerson: 1 });
   assert.equal(list.state.thingInFoxus, imported);
-  assert.equal(list.state.seeItem, 'Описание');
 
   const staff = { name: 'Посох Око Аканы', kindOfThing: 'Посохи', parametrs: {} };
   list.state = { ...list.state, weaponRight: true, typeThing: 'Мечи' };
