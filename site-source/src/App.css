@@ -159,6 +159,7 @@
   box-shadow: none !important;
 }
 .workspace .MuiButton-containedPrimary:hover { background: #426da9 !important; }
+.workspace .MuiButton-containedPrimary .MuiSvgIcon-root { color: #fff !important; }
 .workspace .MuiButton-outlinedPrimary { border-color: #7491b2 !important; color: #294c71 !important; }
 .workspace .MuiButton-outlinedPrimary:hover { background: #d6e5f2 !important; }
 .workspace .MuiButton-textPrimary { color: #294c71 !important; }
@@ -166,6 +167,8 @@
 .workspace .MuiButton-root:focus-visible { outline: 2px solid #315d9a; outline-offset: 2px; }
 .MuiSwitch-colorPrimary.Mui-checked { color: #557cbb !important; }
 .MuiSwitch-colorPrimary.Mui-checked + .MuiSwitch-track { background-color: #557cbb !important; }
+.MuiSwitch-colorSecondary.Mui-checked { color: #557cbb !important; }
+.MuiSwitch-colorSecondary.Mui-checked + .MuiSwitch-track { background-color: #557cbb !important; }
 .panel .text-primary, .toolbar .text-primary { color: #365f9b !important; }
 .panel .text-muted, .toolbar .text-muted { color: #4d6379 !important; }
 .MuiBadge-badge.MuiBadge-colorPrimary { color: #fff !important; }
