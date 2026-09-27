@@ -1,0 +1,38 @@
+name: Build GitHub Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'site-source/**'
+      - '.github/workflows/build-pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: site-source/package-lock.json
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+        working-directory: site-source
+      - name: Build for Pages
+        run: npm run build -- --base /chaosinventory/
+        working-directory: site-source
+      - name: Update published files
+        run: |
+          cp -a site-source/dist/. ./
+          git add -A index.html assets favicon.svg icons.svg
+          if git diff --cached --quiet; then exit 0; fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'Publish latest calculator build'
+          git push
