@@ -4048,7 +4048,8 @@ export class Result extends React.Component {
 		if (positionKoeff < 0) {
 			positionKoeff = 0
 		}
-		var koeffClansGlory = positionKoeff*this.props.clanGlory/100
+		var koeffClansGlory = this.props.clanGlory == null || this.props.clanPosition == null
+			? 0 : positionKoeff*this.props.clanGlory/100
 		
 		
 		// Прибавляем базовый урон
@@ -4723,7 +4724,9 @@ export class Result extends React.Component {
 							
 							{(expirienceInBattle > 0) && <p style={{margin: 0}}>Увеличение опыта в боях: {Math.round(expirienceInBattle)}%</p>}
 							
-							{this.props.clanGlory > 0 && <>
+							{this.props.clan !== 'Нет' && (this.props.clanGlory == null || this.props.clanPosition == null) &&
+								<p style={{margin: 0, color: '#b45f14'}}><b>Клановая слава не рассчитана:</b> укажите славу и позицию в разделе персонажа.</p>}
+							{this.props.clanGlory > 0 && this.props.clanPosition != null && <>
 								<Divider style={{marginTop: 5, marginBottom: 5}} variant="middle" />
 								<p style={{margin: 0}}><b>Клановая слава:</b> {this.props.clanGlory}% · позиция {this.props.clanPosition} · применяется {(koeffClansGlory * 100).toFixed(2)}%</p>
 								{Object.entries(clanBonuses).map(([label, value]) => (

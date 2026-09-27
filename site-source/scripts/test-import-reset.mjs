@@ -41,6 +41,22 @@ try {
   assert.notStrictEqual(second.allSkills, previousSkills);
   assert.equal(first.clansArtRune, 1);
   assert.equal(first.turnireRune, true);
+
+  const ranger = avatar('Рейнджер');
+  ranger.out.clan = 'Наблюдатели';
+  const imported = (state, dataGlory, positionOnClan) => reducer(state, {
+    type: 'Загрузка персонажа', data: ranger,
+    modifireInformation: Array.from({ length: 11 }, () => ({})),
+    dataGlory, positionOnClan, fractionData: 0,
+  });
+  const missingGlory = imported(second, null, 4);
+  assert.equal(missingGlory.clanGlory, null, 'An unavailable glory API is not zero glory');
+  assert.equal(missingGlory.clanPosition, 4);
+  const manualGlory = reducer(missingGlory, { type: 'Смена Клановой славы', data: '20.582' });
+  assert.equal(manualGlory.clanGlory, '20.582');
+  const refreshed = imported(manualGlory, 20.582, 4);
+  assert.equal(refreshed.clanGlory, 20.582);
+  assert.equal(imported(refreshed, null, null).clanPosition, null);
   console.log('Импорт второго аватара сбрасывает ручные настройки и не меняет снимок первого.');
 } finally {
   await server.close();

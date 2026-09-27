@@ -442,8 +442,9 @@ class CharInput extends React.Component {
 												fullWidth={true}
 												label={'Слава'}
 												onChange={(e) => this.changeClanGlory(e)}
-												value = {this.props.clanGlory}
+												value = {this.props.clanGlory ?? ''}
 												disabled={!clanEnable}
+												helperText={clanEnable && this.props.clanGlory == null ? 'Слава не загрузилась. Укажите её вручную.' : ''}
 												
 												type="number"
 												
@@ -464,9 +465,10 @@ class CharInput extends React.Component {
 												fullWidth={true}
 												label={'Позиция'}
 												onChange={(e) => this.changeClanPosition(e)}
-												value = {this.props.clanPosition}
+												value = {this.props.clanPosition ?? ''}
 
 												disabled={!clanEnable}
+												helperText={clanEnable && this.props.clanPosition == null ? 'Позиция не загрузилась. Укажите её вручную.' : ''}
 												type="number"
 												inputProps={{'min': 1, 'max': 1000}}
 												InputLabelProps={{

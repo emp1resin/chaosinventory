@@ -381,7 +381,7 @@ class InputNameForFinding extends React.Component {
 						//						console.log(secondJsonData)
 
 
-						let position = 100;
+						let position = null;
 						if (secondJsonData.positionOnClan) {
 							for (var i = 0; i < secondJsonData.positionOnClan.length; i++) {
 								//								console.log(secondJsonData.positionOnClan[i])
@@ -404,6 +404,10 @@ class InputNameForFinding extends React.Component {
 						if (jsonData.out.clan === 'нет') {
 							jsonData.out.clan = 'Нет'
 						}
+						if (jsonData.out.clan === 'Нет') position = 100;
+						const rawGlory = secondJsonData.clansData.clansArr?.[jsonData.out.clan];
+						const glory = jsonData.out.clan === 'Нет' ? 0 :
+							(rawGlory == null || rawGlory === '' || !Number.isFinite(Number(rawGlory)) ? null : Number(rawGlory));
 
 
 						var urls2 = [
@@ -438,7 +442,7 @@ class InputNameForFinding extends React.Component {
 								this.props.dispatch({
 									type: `Загрузка персонажа`,
 									data: jsonData,
-									dataGlory: secondJsonData.clansData.clansArr[jsonData.out.clan] * 1,
+									dataGlory: glory,
 									fractionData: secondJsonData.fractionData.fractionRLevel * 1 || 0,
 									positionOnClan: position,
 									modifireInformation: result

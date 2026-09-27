@@ -1040,15 +1040,15 @@ function clanGlory(state = [], action) {
 
 	//	console.log(action)
 	if (action.type === 'Смена Клановой славы') {
-		return action.data;
+		return action.data === '' ? null : action.data;
 	} else if (action.type === 'Смена Клана') {
-		return action.data !== 'Нет' ? action.clan[action.data] * 1 : 0;
+		if (action.data === 'Нет') return 0;
+		const value = action.clan?.[action.data];
+		return value == null ? null : Number(value);
 	} else if (action.type === 'Загрузка персонажа') {
-		//		if ()
-		return action.dataGlory ? action.dataGlory : 0;
+		return action.dataGlory ?? null;
 	}  else if (action.type === 'Загрузить все данные игрока') {
-		//		if ()
-		return action.data.clanGlory ? action.data.clanGlory : 0;
+		return action.data.clanGlory ?? null;
 	} else {
 		return state
 	}
