@@ -18,6 +18,9 @@ class TooltipsSkillsInfo extends React.Component {
 					className="skill-tooltip"
 					id={this.props.id}
 					place="right"
+					positionStrategy="fixed"
+					portalRoot={document.body}
+					clickable
 					delayShow={250}
 					opacity={1}
 				>
