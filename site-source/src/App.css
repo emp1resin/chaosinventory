@@ -258,6 +258,8 @@
 
 .skill-tooltip {
   z-index: 1500;
+  box-sizing: border-box;
+  width: min(420px, calc(100vw - 32px));
   max-width: min(420px, calc(100vw - 32px));
   padding: 14px 16px !important;
   border: 1px solid #adc5d8 !important;
@@ -267,14 +269,15 @@
   box-shadow: 0 12px 30px rgba(45, 62, 81, .22);
   font-size: 13px;
   line-height: 1.45;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: normal;
+  max-height: 70vh;
+  overflow-y: auto;
 }
 
-.skill-tooltip p { width: auto !important; margin: 0 0 8px; color: #203850 !important; }
+.skill-tooltip p { width: 100% !important; max-width: 100%; margin: 0 0 8px; color: #203850 !important; overflow-wrap: anywhere; }
 .skill-tooltip p:last-child { margin-bottom: 0; }
-.skill-tooltip { max-height: 70vh; overflow-y: auto; }
-.grandmaster-details { margin: -2px 0 8px; padding: 7px 11px; border: 1px solid #a7bfd3; border-radius: 8px; background: #edf4f9; font-size: 13px; }
-.grandmaster-details summary { cursor: pointer; color: #294c71; font-weight: 700; }
-.grandmaster-details p { margin: 7px 0 0; color: #203850; line-height: 1.5; white-space: pre-line; }
 
 .elixirs-config { margin-top: 18px; padding-top: 14px; border-top: 1px solid #adc5d8; }
 .elixirs-config h3 { margin-bottom: 7px; }

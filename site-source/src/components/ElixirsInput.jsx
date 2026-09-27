@@ -17,7 +17,7 @@ function ElixirsInput({ selected = [], charBless, dispatch }) {
     <div className="elixirs-list">
       {elixirs.map(item => <label key={item.id} className={`elixir-option${selected.includes(item.id) ? ' selected' : ''}${item.unknown ? ' unknown' : ''}`}>
         <input type="checkbox" checked={selected.includes(item.id)} onChange={() => choose(item)} disabled={Boolean(item.unknown)} />
-        <span><strong>{item.name}</strong><small>{elixirDescription(item)} · {item.source}</small></span>
+        <span><strong>{item.name}</strong><small>{elixirDescription(item)}</small></span>
       </label>)}
     </div>
     <p className="elixirs-note">Зелья мгновенного восстановления здоровья и маны не меняют постоянные параметры и здесь не выбираются.</p>
