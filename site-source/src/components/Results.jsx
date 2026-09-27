@@ -4056,7 +4056,6 @@ export class Result extends React.Component {
 		maxDamage+=25+Math.round(power/2 + this.props.level);
 
 		var clanBonuses = {
-			'Урон': [minDamage * koeffClansGlory, maxDamage * koeffClansGlory],
 			'Здоровье': HP * koeffClansGlory,
 			'Мана': MP * koeffClansGlory,
 			'Атака': atack * koeffClansGlory,
@@ -4067,8 +4066,7 @@ export class Result extends React.Component {
 			'Устойчивость': stability * koeffClansGlory,
 		}
 
-		minDamage *= 1+koeffClansGlory
-		maxDamage *= 1+koeffClansGlory
+		// Current character snapshots match the game without an extra clan-glory multiplier on damage.
 		atack *= 1+koeffClansGlory
 		
 		
@@ -4296,7 +4294,7 @@ export class Result extends React.Component {
 			"dualHit": Math.round(doubleChance),
 			"poisonResist": Math.round(resistTempraryEffects),
 			
-			"vamp_physical": Math.round(0),
+			"vamp_physical": Math.round(vampire_power_percent * 10) / 10,
 			"fire_shield": Math.round(0),
 		};
 

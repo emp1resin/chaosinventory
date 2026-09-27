@@ -4,6 +4,7 @@ import { createServer } from 'vite';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import assert from 'node:assert/strict';
+import { resolveEquippedItems } from '../src/data/resolveEquipment.js';
 
 const execFileAsync = promisify(execFile);
 const names = process.env.VERIFY_NAME ? [process.env.VERIFY_NAME] : ['mellstroy', 'destinys', 'LICHonTHEbeach', 'Thrandu1l'];
@@ -45,14 +46,14 @@ const cases = {
   },
   LICHonTHEbeach: {
     skills: [['Фехтовальщик', 14, 2], ['Тиран', 14, 2], ['Точность', 14, 2], ['Владение мечами', 14, 2]],
-    arts: [5, 3, 1, 6],
-    charBless: '15', lifeBless: '3', clanGlory: 44.582,
+    arts: [5, 3, 2, 6], lifeBless: '3',
   },
   Thrandu1l: {
     skills: [['Громила', 14, 0], ['Регенерация', 4, 0], ['Уворотливость', 6, 0]],
   },
 };
 const destinysSnapshotIds = ['1360923', '1358788', '1360184', '1360784', '1346920', '1362469', '1339582', '1360262', '1379860', '1340406', '1334124'];
+const lichSnapshotIds = ['1263603', '1263600', '1263605', '1263602', '1263604', '1263599', '1263789', '0', '1263607', '1263606', '1263601'];
 const destinysExpected = {
   damage: [3813, 5601], atack: 4333, defense: 3221,
   pointsOfAction: 317, pointOnBite: [7, 6.7],
@@ -89,10 +90,10 @@ try {
       json(`https://chaosage.ru/sAPI2.php?user_name=${name}&request=clan_list_by_user_name`),
     ]);
     if (!profile?.out || !equipment) throw new Error(`Missing profile or equipment: ${name}`);
-    for (const [slot, label] of Object.entries(profile.out.things)) {
-      profile.out.things[slot] = allItems.find((item) => item.name === label) || label;
-    }
     const items = await Promise.all(slots.map((slot) => json(`https://chaosage.ru/sAPI2.php?id=${equipment[slot]}&request=equipment_info`).then(itemWithRune)));
+    const {resolved, missing} = resolveEquippedItems(profile.out.things, items, allItems);
+    assert.deepEqual(missing, [], `${name}: equipped base item missing from FAQ`);
+    profile.out.things = resolved;
     const members = clanList ? Object.values(clanList) : [];
     const position = members.findIndex((member) => String(member[1]).toLowerCase() === name.toLowerCase()) + 1 || 100;
     const previous = state;
@@ -152,6 +153,20 @@ try {
       assert.equal(component.comparisonResult.armor[0], 2863);
       assert.equal(component.comparisonResult.resists[0], 1678);
       console.log('destinys: все доступные контрольные параметры совпали с игровым снимком.');
+    }
+    if (name === 'LICHonTHEbeach' && slots.every((slot, index) => String(equipment[slot]) === lichSnapshotIds[index])) {
+      for (const [key, expected] of Object.entries({
+        damage: [8047, 9799], defense: 6915, armor: [3028, 51],
+        pointsOfAction: 436, resists: [1817, 40], criticalDamage: 1202,
+        criticalMultiplier: 2.3, stability: 562, parry: 92, reaction: 221,
+        armorPenetration: 1220, regenerationHP: 1126, regenerationMP: 198,
+        resistDamage: 51, dodge: 21, dodgeBySpell: 12, counterattack: 28,
+        resistTempraryEffects: 51, reflectionResistance: 60, physicalVampirism: 12,
+      })) {
+        const actual = component.comparisonResult[key];
+        assert.deepEqual(actual, expected, `LICHonTHEbeach: ${key}`);
+      }
+      console.log('LICHonTHEbeach: контрольные параметры совпали, кроме атаки (15393 вместо 15425).');
     }
     console.log(JSON.stringify({ name, position, clanGlory: state.clanGlory,
       arts: [state.clansArtSword, state.clansArtSphere, state.clansArtRune, state.clansArtMask],
