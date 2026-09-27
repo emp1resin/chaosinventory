@@ -22,6 +22,7 @@ import { Grid } from '@material-ui/core';
 import { findBreachRune } from '../data/breachRunes';
 import { hasReligionBonuses, sanitizeReligionData } from '../data/religions';
 import { golemSupportPercent } from '../data/golem';
+import { applyElixirs, elixirById } from '../data/elixirs';
 
 export class Result extends React.Component {
 	
@@ -80,6 +81,10 @@ export class Result extends React.Component {
 		var intell = this.props.intellChange;
 		var will = this.props.willChange;
 		var dex = this.props.dexChange;
+		if (this.props.elixirs?.includes('crystal') && this.props.charBless === 'Нет') {
+			power += 50; body += 50; stamina += 50;
+			intell += 50; will += 50; dex += 50;
+		}
 		
 		// Добавляем эффект от блага характеристик
 		
@@ -4121,6 +4126,32 @@ export class Result extends React.Component {
 			regenerationMP *= supportMultiplier;
 		}
 
+		// Active elixirs are chosen manually; overlapping stats are exclusive in
+		// the selection reducer. The flat/percent order is provisional.
+		const activeElixirs = this.props.elixirs || [];
+		const potionStats = applyElixirs(activeElixirs, {
+			attack: atack, defence: defense, armor, resistance: resists,
+			weaponDamage: minDamage, temporaryDamage: resistTempraryEffects,
+			destruction: powerOfDestruction, caster: powerOfLight,
+			summoner: powerOfDark, faith: powerOfPray, defiler: powerOfDefiler,
+			regenerationHP, regenerationMP, parry,
+		});
+		atack = potionStats.attack;
+		defense = potionStats.defence;
+		armor = potionStats.armor;
+		resists = potionStats.resistance;
+		minDamage = potionStats.weaponDamage;
+		maxDamage = applyElixirs(activeElixirs, { weaponDamage: maxDamage }).weaponDamage;
+		resistTempraryEffects = potionStats.temporaryDamage;
+		powerOfDestruction = potionStats.destruction;
+		powerOfLight = potionStats.caster;
+		powerOfDark = potionStats.summoner;
+		powerOfPray = potionStats.faith;
+		powerOfDefiler = potionStats.defiler;
+		regenerationHP = potionStats.regenerationHP;
+		regenerationMP = potionStats.regenerationMP;
+		parry = potionStats.parry;
+
 
 		// Считаем бафы от меток (снайпер и застрельщик навыки)
 
@@ -4551,7 +4582,7 @@ export class Result extends React.Component {
 							))}
 							<Divider style={{marginTop: 5, marginBottom: 5}} variant="middle"/>
 							<p style={{margin: 0}}><b>Главное:</b></p>
-							<p style={{margin: 0}}>Временные эффекты и эликсиры не включены в расчёт.</p>
+							<p style={{margin: 0}}>Учитываются только выбранные вручную эликсиры; другие временные эффекты не включены.</p>
 							<p style={{margin: 0}}>Здоровье (макс.): {Math.round(HP)}</p>
 							<p style={{margin: 0}}>Мана (макс.): {Math.round(MP)}</p>
 							<p style={{margin: 0}}>ОД на действие: {Math.round(pointOnBiteDisplay)} ({pointOnBiteDisplay})</p>
@@ -4751,6 +4782,7 @@ export class Result extends React.Component {
 							{this.props.clan !== 'Нет' && (this.props.clanGlory == null || this.props.clanPosition == null) &&
 								<p style={{margin: 0, color: '#b45f14'}}><b>Клановая слава не рассчитана:</b> укажите славу и позицию в разделе персонажа.</p>}
 							{golemSupport > 0 && <p style={{margin: 0}}><b>Голем, Поддержка:</b> +{golemSupport}% к основным параметрам (предварительный расчёт).</p>}
+							{activeElixirs.length > 0 && <p style={{margin: 0}}><b>Эликсиры:</b> {activeElixirs.map(id => elixirById[id]?.name).filter(Boolean).join(', ')} (проценты и фиксированные прибавки рассчитаны предварительно).</p>}
 							{this.props.clanGlory > 0 && this.props.clanPosition != null && <>
 								<Divider style={{marginTop: 5, marginBottom: 5}} variant="middle" />
 								<p style={{margin: 0}}><b>Клановая слава:</b> {this.props.clanGlory}% · позиция {this.props.clanPosition} · применяется {(koeffClansGlory * 100).toFixed(2)}%</p>
@@ -4861,6 +4893,7 @@ const mapStateToProps = (state) => {
 		runesChange: state.runesChange,
 		charBless: state.charBless,
 		lifeBless: state.lifeBless,
+		elixirs: state.elixirs,
 		golem: state.golem,
 
     }

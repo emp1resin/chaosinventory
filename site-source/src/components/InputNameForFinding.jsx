@@ -589,7 +589,7 @@ class InputNameForFinding extends React.Component {
 
 			</div>
 			<Typography variant="caption" component="p" className="toolbar-hint">
-				После загрузки укажите навыки, клановые артефакты и благословения вручную. Эликсиры пока не включены в расчёт.
+				После загрузки укажите навыки, клановые артефакты, благословения и активные эликсиры вручную.
 			</Typography>
 			<div className = 'col-12 toolbar-status'
 			style = {

@@ -1,4 +1,5 @@
 import { emptyGolem } from '../data/golem';
+import { selectElixir, elixirById } from '../data/elixirs';
 
 var initialState = {
 	typoOfThings: 'Перчатки',
@@ -16,6 +17,7 @@ var initialState = {
 	clanPosition: 100,
 	clanGlory: 0,
 	golem: { ...emptyGolem },
+	elixirs: [],
 	religion: 'Нет',
 	religionData: false,
 	profession: 'Нет',
@@ -352,6 +354,7 @@ const postReducer = (state = initialState, action) => {
 			lifeBless: 'Нет',
 			turnireRune: false,
 			golem: { ...emptyGolem },
+			elixirs: [],
 		};
 	}
 
@@ -370,6 +373,7 @@ const postReducer = (state = initialState, action) => {
 		clanPosition: clanPosition(state.clanPosition, action),
 		clanGlory: clanGlory(state.clanGlory, action),
 		golem: golem(state.golem, action),
+		elixirs: elixirsReducer(state.elixirs, action),
 		religionData: religionData(state.religionData, action),
 		religion: religion(state.religion, action),
 		profession: profession(state.profession, action),
@@ -1046,6 +1050,18 @@ function golem(state = emptyGolem, action) {
 	if (action.type === 'Загрузка персонажа') return { ...emptyGolem };
 	if (action.type === 'Загрузить все данные игрока') return { ...emptyGolem, ...action.data.golem };
 	return state;
+}
+
+function elixirsReducer(state = [], action) {
+  if (action.type === 'Переключить эликсир') return selectElixir(state, action.data);
+  if (action.type === 'Смена Блага Характеристик' && action.data !== 'Нет') return state.filter(id => id !== 'crystal');
+  if (action.type === 'Загрузка персонажа') return [];
+  if (action.type === 'Загрузить все данные игрока') {
+    const selected = Array.isArray(action.data.elixirs) ? action.data.elixirs : [];
+    return selected.filter(id => elixirById[id] && !elixirById[id].unknown &&
+      (id !== 'crystal' || action.data.charBless === 'Нет')).reduce(selectElixir, []);
+  }
+  return state;
 }
 
 function clanGlory(state = [], action) {

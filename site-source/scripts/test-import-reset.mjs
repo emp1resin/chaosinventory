@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { createServer } from 'vite';
 import { golemSupportPercent } from '../src/data/golem.js';
+import { applyElixirs } from '../src/data/elixirs.js';
 
 const server = await createServer({ server: { middlewareMode: true }, appType: 'custom' });
 try {
@@ -29,6 +30,11 @@ try {
   first = reducer(first, { type: 'Смена голема', data: { type: 'Золотой', mode: 'Поддержка' } });
   assert.equal(golemSupportPercent(first.golem), 5.5);
   first = reducer(first, { type: 'Изменить мастерство навыка Магия стихий', data: 3 });
+  first = reducer(first, { type: 'Переключить эликсир', data: 'attack' });
+  first = reducer(first, { type: 'Переключить эликсир', data: 'armor' });
+  first = reducer(first, { type: 'Переключить эликсир', data: 'greatAttack' });
+  assert.deepEqual(first.elixirs, ['armor', 'greatAttack'], 'stronger attack elixir replaces weaker one');
+  assert.deepEqual(applyElixirs(first.elixirs, { attack: 1000, armor: 100 }), { attack: 1750, armor: 360 });
   const previousEquipment = first.thingOnPers;
   const previousModifiers = first.modifireThings;
   const previousSkills = first.allSkills;
@@ -42,6 +48,7 @@ try {
   assert.equal(second.charBless, 'Нет');
   assert.equal(second.golem.type, 'Нет');
   assert.equal(second.allSkillsMaster.elementSkills, 0);
+  assert.deepEqual(second.elixirs, []);
   assert.notStrictEqual(second.thingOnPers, previousEquipment);
   assert.notStrictEqual(second.modifireThings, previousModifiers);
   assert.notStrictEqual(second.allSkills, previousSkills);
@@ -52,8 +59,10 @@ try {
   const saved = reducer(second, { type: 'Загрузить все данные игрока', data: first });
   assert.equal(golemSupportPercent(saved.golem), 5.5);
   assert.equal(saved.allSkillsMaster.elementSkills, 3);
-  const olderSave = reducer(saved, { type: 'Загрузить все данные игрока', data: { ...first, golem: undefined } });
+  assert.deepEqual(saved.elixirs, ['armor', 'greatAttack']);
+  const olderSave = reducer(saved, { type: 'Загрузить все данные игрока', data: { ...first, golem: undefined, elixirs: undefined } });
   assert.equal(olderSave.golem.type, 'Нет');
+  assert.deepEqual(olderSave.elixirs, []);
 
   const ranger = avatar('Рейнджер');
   ranger.out.clan = 'Наблюдатели';

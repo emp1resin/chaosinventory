@@ -5,6 +5,7 @@ import 'bootstrap/dist/css/bootstrap.css';
 //import VisualBlock from './components/VisualBlock';
 import CharInput from './components/CharInput';
 import SkillsInput from './components/SkillsInput';
+import ElixirsInput from './components/ElixirsInput';
 //import BottomMenu from './components/BottomMenu';
 
 import ItemsFit from './components/ItemsFit';
@@ -52,6 +53,7 @@ class App extends React.Component {
 					<div className='col-xl-4 col-lg-4  col-md-5'>
 						<div className='panel p-3'>
 							<CharInput/>
+							<ElixirsInput/>
 						</div>
 					</div>
 					<div className='col-xl-8 col-lg-8  col-md-7'>

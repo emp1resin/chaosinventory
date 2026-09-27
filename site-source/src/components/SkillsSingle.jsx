@@ -119,6 +119,10 @@ class SkillsSingle extends React.Component {
 						<input type="text" disabled value={getPointsCount(pointThisSkills) + pointNeededForThisSkills}  className="form-control" />
 
 						</div>
+						{this.props.contentGrandmaster && <details className="grandmaster-details">
+							<summary>Грандмастер — описание навыка</summary>
+							<p>{this.props.contentGrandmaster}</p>
+						</details>}
 					</div>
 				}
 			</>

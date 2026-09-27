@@ -143,6 +143,14 @@ try {
       charBless: state.charBless, lifeBless: state.lifeBless, renderless: true,
     });
     component.render();
+    if (name === 'destinys') {
+      assert.deepEqual(state.elixirs, [], 'DestinyS: no active elixirs imported from public profile');
+      assert.equal(component.comparisonResult.atack, 4333, 'DestinyS: baseline attack changed');
+      const withElixirs = new Result({ ...component.props, elixirs: ['greatAttack', 'greatDefence'], renderless: true });
+      withElixirs.render();
+      assert.equal(withElixirs.comparisonResult.atack, Math.round(4333 * 1.15 + 600));
+      assert.equal(withElixirs.comparisonResult.defense, Math.round(3221 * 1.15 + 600));
+    }
     if (name === 'Thrandu1l') {
       assert.equal(state.allSkills.alchstabilitySkills, 0, 'Thrandu1l: alchemy skill did not reset');
       for (const [key, expected] of Object.entries(thrandu1lExpected)) {

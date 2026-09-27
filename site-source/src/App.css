@@ -271,6 +271,25 @@
 
 .skill-tooltip p { width: auto !important; margin: 0 0 8px; color: #203850 !important; }
 .skill-tooltip p:last-child { margin-bottom: 0; }
+.skill-tooltip { max-height: 70vh; overflow-y: auto; }
+.grandmaster-details { margin: -2px 0 8px; padding: 7px 11px; border: 1px solid #a7bfd3; border-radius: 8px; background: #edf4f9; font-size: 13px; }
+.grandmaster-details summary { cursor: pointer; color: #294c71; font-weight: 700; }
+.grandmaster-details p { margin: 7px 0 0; color: #203850; line-height: 1.5; white-space: pre-line; }
+
+.elixirs-config { margin-top: 18px; padding-top: 14px; border-top: 1px solid #adc5d8; }
+.elixirs-config h3 { margin-bottom: 7px; }
+.elixirs-config > p { color: #4d6379 !important; font-size: 13px; line-height: 1.45; }
+.elixirs-list { max-height: 300px; overflow-y: auto; border: 1px solid #adc5d8; border-radius: 9px; background: #f0f6fb; }
+.elixir-option { display: flex; align-items: flex-start; gap: 9px; margin: 0; padding: 9px 11px; border-bottom: 1px solid #d2dfeb; cursor: pointer; }
+.elixir-option:last-child { border-bottom: 0; }
+.elixir-option.selected { background: #d0e7f6; }
+.elixir-option.unknown { opacity: .65; cursor: default; }
+.elixir-option input { margin-top: 3px; accent-color: #557cbb; }
+.elixir-option span { min-width: 0; }
+.elixir-option strong, .elixir-option small { display: block; }
+.elixir-option strong { color: #203850; font-size: 13px; }
+.elixir-option small { margin-top: 2px; color: #4d6379; line-height: 1.35; }
+.elixirs-config .elixirs-note { font-size: 12px; }
 
 .skill-faq-note {
   margin: 3px 0 10px;
