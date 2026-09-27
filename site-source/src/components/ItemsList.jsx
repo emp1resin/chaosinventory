@@ -58,7 +58,7 @@ import itemsAll from './ItemsAll';
 
 //import { palette } from '@material-ui/system';
 // Ввод характеристик персонажа, его уровня и т.д.
-class ItemsList extends React.Component {
+export class ItemsList extends React.Component {
 
 	constructor(props) {
 		super(props);
@@ -125,6 +125,24 @@ class ItemsList extends React.Component {
 			open: false,
 			seeItem: 'Описание',
 		};
+		this.emptyThingInFocus = this.state.thingInFoxus;
+	}
+
+	componentDidUpdate(prevProps) {
+		if (prevProps.loadedPerson === this.props.loadedPerson) return;
+
+		const slot = this.state.weaponRight ? 'Оружие Справа'
+			: this.state.weaponLeft ? 'Оружие Слева'
+			: this.state.typeThing === 'Кольца' ? this.state.rings : this.state.typeThing;
+		const equipped = this.props.thingOnPers[slot];
+		const thingInFoxus = equipped && typeof equipped === 'object' && equipped.parametrs
+			? equipped : this.emptyThingInFocus;
+		this.setState({
+			thingInFoxus,
+			seeItem: 'Описание',
+			typeThing: (this.state.weaponRight || this.state.weaponLeft)
+				? thingInFoxus.kindOfThing || this.state.typeThing : this.state.typeThing,
+		});
 	}
 	
 	
