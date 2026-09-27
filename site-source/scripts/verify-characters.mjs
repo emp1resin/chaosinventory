@@ -54,6 +54,10 @@ const cases = {
 };
 const destinysSnapshotIds = ['1360923', '1358788', '1360184', '1360784', '1346920', '1362469', '1339582', '1360262', '1379860', '1340406', '1334124'];
 const lichSnapshotIds = ['1263603', '1263600', '1263605', '1263602', '1263604', '1263599', '1263789', '0', '1263607', '1263606', '1263601'];
+// Values transcribed from the player's ten equipped item tooltips (27 September 2026).
+// The two rings have the same visible name; their individual equipment IDs stay distinct.
+const lichScreenshotAttack = [77, 84, 82, 122, 83, 130, 130, null, 100, 100, 71];
+const lichScreenshotDexterity = [27, 25, 66, 36, 57, 33, 63, null, 70, 70, 28];
 const destinysExpected = {
   damage: [3813, 5601], atack: 4333, defense: 3221,
   pointsOfAction: 317, pointOnBite: [7, 6.7],
@@ -155,6 +159,13 @@ try {
       console.log('destinys: все доступные контрольные параметры совпали с игровым снимком.');
     }
     if (name === 'LICHonTHEbeach' && slots.every((slot, index) => String(equipment[slot]) === lichSnapshotIds[index])) {
+      for (let index = 0; index < slots.length; index++) {
+        if (lichScreenshotAttack[index] === null) continue;
+        assert.equal(Number(items[index].attack), lichScreenshotAttack[index], `LICHonTHEbeach: ${slots[index]} item attack`);
+        assert.equal(Number(items[index].giveDexterity), lichScreenshotDexterity[index], `LICHonTHEbeach: ${slots[index]} item dexterity`);
+      }
+      assert.equal(lichScreenshotAttack.reduce((sum, value) => sum + (value || 0), 0), 979);
+      assert.equal(lichScreenshotDexterity.reduce((sum, value) => sum + (value || 0), 0), 475);
       for (const [key, expected] of Object.entries({
         damage: [8047, 9799], defense: 6915, armor: [3028, 51],
         pointsOfAction: 436, resists: [1817, 40], criticalDamage: 1202,
