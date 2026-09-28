@@ -1,0 +1,632 @@
+{
+  "kind": "historical replay, not current game stats",
+  "source": "local API responses retained from previous verification",
+  "runs": [
+    {
+      "name": "LICHonTHEbeach",
+      "dataOrigin": "historical cached API responses",
+      "at": "2026-09-28T15:59:03.088Z",
+      "clan": "Уничтожители",
+      "glory": 44.682,
+      "nativePosition": 47,
+      "equipped": 7,
+      "skills": [
+        [
+          "Фехтовальщик",
+          14,
+          2
+        ],
+        [
+          "Тиран",
+          14,
+          2
+        ],
+        [
+          "Точность",
+          14,
+          2
+        ],
+        [
+          "Владение мечами",
+          14,
+          2
+        ]
+      ],
+      "arts": [
+        5,
+        3,
+        2,
+        6
+      ],
+      "native": {
+        "damage": [
+          1328,
+          1664
+        ],
+        "attack": 5199,
+        "hp": 8445
+      },
+      "withoutGlory": {
+        "damage": [
+          1328,
+          1664
+        ],
+        "attack": 4593,
+        "hp": 7555
+      },
+      "restoredNativeDamage": [
+        1503,
+        1884
+      ],
+      "maskFlat": [
+        345.765,
+        543.345
+      ],
+      "rows": [
+        {
+          "position": 1,
+          "currentPercent": 44.0118,
+          "faqPercent": 44.682,
+          "damage": [
+            1328,
+            1664
+          ],
+          "attack": 6615,
+          "defence": 2140,
+          "hp": 10527,
+          "experimentalDamage": [
+            1921,
+            2408
+          ]
+        },
+        {
+          "position": 2,
+          "currentPercent": 43.3415,
+          "faqPercent": 44.0118,
+          "damage": [
+            1328,
+            1664
+          ],
+          "attack": 6584,
+          "defence": 2130,
+          "hp": 10482,
+          "experimentalDamage": [
+            1912,
+            2397
+          ]
+        },
+        {
+          "position": 10,
+          "currentPercent": 37.9797,
+          "faqPercent": 38.6499,
+          "damage": [
+            1328,
+            1664
+          ],
+          "attack": 6338,
+          "defence": 2050,
+          "hp": 10120,
+          "experimentalDamage": [
+            1841,
+            2308
+          ]
+        },
+        {
+          "position": 47,
+          "currentPercent": 13.1812,
+          "faqPercent": 13.8514,
+          "damage": [
+            1328,
+            1664
+          ],
+          "attack": 5199,
+          "defence": 1682,
+          "hp": 8445,
+          "experimentalDamage": [
+            1512,
+            1895
+          ]
+        },
+        {
+          "position": 67,
+          "currentPercent": 0,
+          "faqPercent": 0.4468,
+          "damage": [
+            1328,
+            1664
+          ],
+          "attack": 4593,
+          "defence": 1486,
+          "hp": 7555,
+          "experimentalDamage": [
+            1334,
+            1672
+          ]
+        },
+        {
+          "position": 100,
+          "currentPercent": 0,
+          "faqPercent": 0,
+          "damage": [
+            1328,
+            1664
+          ],
+          "attack": 4593,
+          "defence": 1486,
+          "hp": 7555,
+          "experimentalDamage": [
+            1328,
+            1664
+          ]
+        }
+      ]
+    },
+    {
+      "name": "destinys",
+      "dataOrigin": "historical cached API responses",
+      "at": "2026-09-28T15:59:03.208Z",
+      "clan": "Уничтожители",
+      "glory": 44.682,
+      "nativePosition": 185,
+      "equipped": 11,
+      "skills": [
+        [
+          "Тиран",
+          12,
+          1
+        ],
+        [
+          "Двойное оружие",
+          14,
+          2
+        ],
+        [
+          "Громила",
+          14,
+          2
+        ]
+      ],
+      "arts": [
+        5,
+        3,
+        2,
+        6
+      ],
+      "native": {
+        "damage": [
+          3813,
+          5601
+        ],
+        "attack": 4333,
+        "hp": 31048
+      },
+      "withoutGlory": {
+        "damage": [
+          3813,
+          5601
+        ],
+        "attack": 4333,
+        "hp": 31048
+      },
+      "restoredNativeDamage": [
+        3813,
+        5601
+      ],
+      "maskFlat": [
+        233.1,
+        366.3
+      ],
+      "rows": [
+        {
+          "position": 1,
+          "currentPercent": 44.0118,
+          "faqPercent": 44.682,
+          "damage": [
+            3813,
+            5601
+          ],
+          "attack": 6240,
+          "defence": 4639,
+          "hp": 44713,
+          "experimentalDamage": [
+            5517,
+            8104
+          ]
+        },
+        {
+          "position": 2,
+          "currentPercent": 43.3415,
+          "faqPercent": 44.0118,
+          "damage": [
+            3813,
+            5601
+          ],
+          "attack": 6211,
+          "defence": 4617,
+          "hp": 44505,
+          "experimentalDamage": [
+            5491,
+            8067
+          ]
+        },
+        {
+          "position": 10,
+          "currentPercent": 37.9797,
+          "faqPercent": 38.6499,
+          "damage": [
+            3813,
+            5601
+          ],
+          "attack": 5979,
+          "defence": 4445,
+          "hp": 42840,
+          "experimentalDamage": [
+            5287,
+            7766
+          ]
+        },
+        {
+          "position": 47,
+          "currentPercent": 13.1812,
+          "faqPercent": 13.8514,
+          "damage": [
+            3813,
+            5601
+          ],
+          "attack": 4904,
+          "defence": 3646,
+          "hp": 35140,
+          "experimentalDamage": [
+            4341,
+            6377
+          ]
+        },
+        {
+          "position": 67,
+          "currentPercent": 0,
+          "faqPercent": 0.4468,
+          "damage": [
+            3813,
+            5601
+          ],
+          "attack": 4333,
+          "defence": 3221,
+          "hp": 31048,
+          "experimentalDamage": [
+            3830,
+            5626
+          ]
+        },
+        {
+          "position": 100,
+          "currentPercent": 0,
+          "faqPercent": 0,
+          "damage": [
+            3813,
+            5601
+          ],
+          "attack": 4333,
+          "defence": 3221,
+          "hp": 31048,
+          "experimentalDamage": [
+            3813,
+            5601
+          ]
+        }
+      ]
+    },
+    {
+      "name": "mellstroy",
+      "dataOrigin": "historical cached API responses",
+      "at": "2026-09-28T15:59:03.220Z",
+      "clan": "Уничтожители",
+      "glory": 44.682,
+      "nativePosition": 190,
+      "equipped": 8,
+      "skills": [
+        [
+          "Алхимический ингибитор",
+          20,
+          2
+        ],
+        [
+          "Грузоподъемность",
+          8,
+          1
+        ],
+        [
+          "Алхимический стабилизатор",
+          9,
+          1
+        ],
+        [
+          "Алхимический активатор",
+          5,
+          0
+        ]
+      ],
+      "arts": [],
+      "native": {
+        "damage": [
+          123,
+          130
+        ],
+        "attack": 57,
+        "hp": 3006
+      },
+      "withoutGlory": {
+        "damage": [
+          123,
+          130
+        ],
+        "attack": 57,
+        "hp": 3006
+      },
+      "restoredNativeDamage": [
+        123,
+        130
+      ],
+      "maskFlat": [
+        0,
+        0
+      ],
+      "rows": [
+        {
+          "position": 1,
+          "currentPercent": 44.0118,
+          "faqPercent": 44.682,
+          "damage": [
+            123,
+            130
+          ],
+          "attack": 82,
+          "defence": 82,
+          "hp": 4329,
+          "experimentalDamage": [
+            178,
+            188
+          ]
+        },
+        {
+          "position": 2,
+          "currentPercent": 43.3415,
+          "faqPercent": 44.0118,
+          "damage": [
+            123,
+            130
+          ],
+          "attack": 82,
+          "defence": 82,
+          "hp": 4309,
+          "experimentalDamage": [
+            177,
+            187
+          ]
+        },
+        {
+          "position": 10,
+          "currentPercent": 37.9797,
+          "faqPercent": 38.6499,
+          "damage": [
+            123,
+            130
+          ],
+          "attack": 79,
+          "defence": 79,
+          "hp": 4148,
+          "experimentalDamage": [
+            171,
+            180
+          ]
+        },
+        {
+          "position": 47,
+          "currentPercent": 13.1812,
+          "faqPercent": 13.8514,
+          "damage": [
+            123,
+            130
+          ],
+          "attack": 65,
+          "defence": 65,
+          "hp": 3402,
+          "experimentalDamage": [
+            140,
+            148
+          ]
+        },
+        {
+          "position": 67,
+          "currentPercent": 0,
+          "faqPercent": 0.4468,
+          "damage": [
+            123,
+            130
+          ],
+          "attack": 57,
+          "defence": 57,
+          "hp": 3006,
+          "experimentalDamage": [
+            124,
+            131
+          ]
+        },
+        {
+          "position": 100,
+          "currentPercent": 0,
+          "faqPercent": 0,
+          "damage": [
+            123,
+            130
+          ],
+          "attack": 57,
+          "defence": 57,
+          "hp": 3006,
+          "experimentalDamage": [
+            123,
+            130
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Thrandu1l",
+      "dataOrigin": "historical cached API responses",
+      "at": "2026-09-28T15:59:03.234Z",
+      "clan": "Нет",
+      "glory": 0,
+      "nativePosition": 100,
+      "equipped": 10,
+      "skills": [
+        [
+          "Громила",
+          14,
+          0
+        ],
+        [
+          "Регенерация",
+          4,
+          0
+        ],
+        [
+          "Уворотливость",
+          6,
+          0
+        ],
+        [
+          "Фехтовальщик",
+          1,
+          0
+        ],
+        [
+          "Точность",
+          2,
+          0
+        ]
+      ],
+      "arts": [],
+      "native": {
+        "damage": [
+          287,
+          304
+        ],
+        "attack": 1045,
+        "hp": 1224
+      },
+      "withoutGlory": {
+        "damage": [
+          287,
+          304
+        ],
+        "attack": 1045,
+        "hp": 1224
+      },
+      "restoredNativeDamage": [
+        287,
+        304
+      ],
+      "maskFlat": [
+        0,
+        0
+      ],
+      "rows": [
+        {
+          "position": 1,
+          "currentPercent": 0,
+          "faqPercent": 0,
+          "damage": [
+            287,
+            304
+          ],
+          "attack": 1045,
+          "defence": 778,
+          "hp": 1224,
+          "experimentalDamage": [
+            287,
+            304
+          ]
+        },
+        {
+          "position": 2,
+          "currentPercent": 0,
+          "faqPercent": 0,
+          "damage": [
+            287,
+            304
+          ],
+          "attack": 1045,
+          "defence": 778,
+          "hp": 1224,
+          "experimentalDamage": [
+            287,
+            304
+          ]
+        },
+        {
+          "position": 10,
+          "currentPercent": 0,
+          "faqPercent": 0,
+          "damage": [
+            287,
+            304
+          ],
+          "attack": 1045,
+          "defence": 778,
+          "hp": 1224,
+          "experimentalDamage": [
+            287,
+            304
+          ]
+        },
+        {
+          "position": 47,
+          "currentPercent": 0,
+          "faqPercent": 0,
+          "damage": [
+            287,
+            304
+          ],
+          "attack": 1045,
+          "defence": 778,
+          "hp": 1224,
+          "experimentalDamage": [
+            287,
+            304
+          ]
+        },
+        {
+          "position": 67,
+          "currentPercent": 0,
+          "faqPercent": 0,
+          "damage": [
+            287,
+            304
+          ],
+          "attack": 1045,
+          "defence": 778,
+          "hp": 1224,
+          "experimentalDamage": [
+            287,
+            304
+          ]
+        },
+        {
+          "position": 100,
+          "currentPercent": 0,
+          "faqPercent": 0,
+          "damage": [
+            287,
+            304
+          ],
+          "attack": 1045,
+          "defence": 778,
+          "hp": 1224,
+          "experimentalDamage": [
+            287,
+            304
+          ]
+        }
+      ]
+    }
+  ]
+}
