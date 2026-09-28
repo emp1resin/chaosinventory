@@ -20,11 +20,11 @@ jobs:
       - name: Install
         run: npm ci --legacy-peer-deps
         working-directory: site-source
-      - name: Build for the same-origin HTTP host
+      - name: Build for the SpaceWeb site origin
         run: npm run build -- --base /
         working-directory: site-source
         env:
-          VITE_CHAOS_API_BASE: http://rahunzanof.temp.swtest.ru
+          VITE_CHAOS_API_BASE: same-origin
       - name: Package site and PHP API at document root
         run: |
           cp backend/spaceweb/index.php backend/spaceweb/.htaccess site-source/dist/
