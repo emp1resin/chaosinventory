@@ -6,7 +6,8 @@ declare(strict_types=1);
 // with environment variables, never with credentials in a public repository.
 const FRONTEND_ORIGINS = ['https://emp1resin.github.io', 'https://chaosinventory.emp1res1n.chatgpt.site',
     'http://rahunzanof.temp.swtest.ru', 'http://chaosinventory.online', 'https://chaosinventory.online',
-    'http://www.chaosinventory.online', 'https://www.chaosinventory.online'];
+    'http://www.chaosinventory.online', 'https://www.chaosinventory.online',
+    'http://chaosinventory.online.swtest.ru', 'https://chaosinventory.online.swtest.ru'];
 const GAME_REQUESTS_BY_NAME = ['user_equipment_list', 'user_fraction', 'clan_list_by_user_name', 'user_religionBonuses'];
 
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
