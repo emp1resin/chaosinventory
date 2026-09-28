@@ -3,10 +3,14 @@ import Button from '@material-ui/core/Button';
 import Typography from '@material-ui/core/Typography';
 import { createBugReport, probeBridge, queueBugReport, sendBugReport } from '../data/diagnostics';
 
-export default function BugReportButton({ nick, lastError, build, loadedNick }) {
+export default function BugReportButton({ nick, lastError, build, loadedNick, resetKey }) {
   const [sending, setSending] = React.useState(false);
   const [receipt, setReceipt] = React.useState('');
   const [sendError, setSendError] = React.useState('');
+  React.useEffect(() => {
+    setReceipt('');
+    setSendError('');
+  }, [resetKey]);
 
   async function submit() {
     setSending(true);

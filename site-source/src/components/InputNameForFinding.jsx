@@ -329,6 +329,7 @@ class InputNameForFinding extends React.Component {
 		this.state = {
 			name: 'DestinyS',
 			loadedName: '',
+			reportRevision: 0,
 			loading: false,
 			error: '',
 			drawerResultsOpen: false
@@ -346,6 +347,7 @@ class InputNameForFinding extends React.Component {
 		this.setState({
 			loading: true,
 			error: '',
+			reportRevision: this.state.reportRevision + 1,
 
 		});
 
@@ -606,17 +608,13 @@ class InputNameForFinding extends React.Component {
 			<Typography variant="caption" component="p" className="toolbar-hint">
 				После загрузки укажите навыки, клановые артефакты, благословения и активные эликсиры вручную.
 			</Typography>
-			<div className = 'col-12 toolbar-status'
-			style = {
-				{
-					height: 5
-				}
-			} > {
+			<div className = 'col-12 toolbar-status' > {
 				this.state.loading && < LinearProgress / >
 			}
 			{this.state.error && <Typography color="error" style={{marginTop: 8}}>{this.state.error}</Typography>}
 			<BugReportButton nick={this.state.name} lastError={this.state.error}
-				build={this.state.error ? null : this.props.reportState} loadedNick={this.state.loadedName} />
+				build={this.state.error ? null : this.props.reportState} loadedNick={this.state.loadedName}
+				resetKey={this.state.reportRevision} />
 
 			<
 			/div> <

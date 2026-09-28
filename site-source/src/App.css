@@ -90,7 +90,7 @@
 .toolbar .save-actions { grid-column: 5; grid-row: 1; padding: 0; }
 .toolbar .save-actions .MuiButton-root { flex: 1; white-space: nowrap; }
 .toolbar-hint { grid-column: 1 / -1; grid-row: 2; margin: 0 !important; color: #4d6379 !important; }
-.toolbar > .toolbar-status { grid-column: 1 / -1; grid-row: 3; }
+.toolbar > .toolbar-status { grid-column: 1 / -1; grid-row: 3; padding-top: 2px; }
 
 .panel {
   min-height: 200px;
