@@ -4,6 +4,7 @@ on:
     paths:
       - 'site-source/scripts/audit-network.mjs'
       - 'site-source/scripts/test-network-failures.mjs'
+      - 'diagnostics/index.html'
       - '.github/workflows/network-audit.yml'
 permissions:
   contents: read
@@ -18,3 +19,9 @@ jobs:
           node-version: '22'
       - name: Read-only network and CORS checks
         run: node site-source/scripts/audit-network.mjs
+      - name: Install test dependencies
+        working-directory: site-source
+        run: npm ci --legacy-peer-deps
+      - name: Reproduce failures in current production modules
+        working-directory: site-source
+        run: node --experimental-vm-modules scripts/test-network-failures.mjs

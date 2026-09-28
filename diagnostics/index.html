@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="ru">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ChaosInventory — проверка соединения</title>
+<style>
+body{margin:0;background:#d7dce2;color:#1b3043;font:16px/1.45 system-ui,sans-serif}main{max-width:1000px;margin:32px auto;padding:24px;background:#edf5fc;border:1px solid #c4d6e4;border-radius:16px}h1{margin-top:0}input,button{font:inherit;padding:10px 14px;border:1px solid #869cb1;border-radius:8px}button{background:#335c7d;color:white;cursor:pointer}button:disabled{opacity:.6;cursor:wait}.controls{display:flex;gap:12px;flex-wrap:wrap}input{flex:1;min-width:200px}table{width:100%;border-collapse:collapse;margin:20px 0;font-size:14px}td,th{padding:9px;border-bottom:1px solid #c9d9e7;text-align:left;vertical-align:top;overflow-wrap:anywhere}.ok{color:#215e43}.fail{color:#9b2737}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:white;padding:16px;border-radius:8px;font-size:13px}.muted{color:#526a80}#summary,#sent{padding:12px 0}@media(max-width:700px){main{margin:8px;padding:16px}th:nth-child(3),td:nth-child(3){display:none}}
+</style>
+<main>
+<h1>Проверка загрузки персонажа</h1>
+<p>Проверка обращается к текущим данным игры для любого ника. Она не меняет ваш билд и не использует сохранённые профили.</p>
+<div class="controls"><input id="nick" aria-label="Ник персонажа" placeholder="Ник персонажа" value="Djan" maxlength="60"><button id="run">Проверить и отправить диагностику</button></div>
+<p class="muted">Одно нажатие проверит профиль, надетые вещи и отправку отчёта. Если сервер отчётов недоступен, результаты останутся на этой странице. Файлы не скачиваются.</p>
+<div id="summary" role="status">Проверка ещё не запущена.</div>
+<table><thead><tr><th>Проверка</th><th>Результат</th><th>Источник</th><th>Время</th></tr></thead><tbody id="results"></tbody></table>
+<div id="sent" role="status"></div>
+<details><summary>Технические подробности</summary><pre id="detail"></pre></details>
+</main>
+<script type="module">
+const bridge='https://chaosinventory-data.emp1res1n.chatgpt.site';
+const version='network-audit-20260928-v1';
+const $=id=>document.getElementById(id);
+let events=[];
+const slots=['arms','gloves','weapon','belt','boots','helm','amulet','shield','ring1','ring2','armor'];
+const slotNames={arms:'наручи',gloves:'перчатки',weapon:'оружие',belt:'пояс',boots:'обувь',helm:'шлем',amulet:'амулет',shield:'вторая рука',ring1:'левое кольцо',ring2:'правое кольцо',armor:'доспех'};
+const validEquipmentList=items=>items&&typeof items==='object'&&!Array.isArray(items)&&slots.every(slot=>Object.hasOwn(items,slot)&&/^\d+$/.test(String(items[slot])));
+function append(row) {
+  row.at=new Date().toISOString();
+  events.push(row);
+  const tr=document.createElement('tr');
+  for(const text of [row.label,row.result,row.source,`${row.ms} мс`]){const td=document.createElement('td');td.textContent=text;tr.append(td);}
+  tr.className=row.ok?'ok':'fail';$('results').append(tr);
+  $('detail').textContent=JSON.stringify({version,origin:location.origin,at:new Date().toISOString(),events},null,2);
+}
+async function request(label,url,{method='GET',body,mode='cors',contentType,expect,parse='text',timeout=12000}={}) {
+  const start=performance.now(), controller=new AbortController();
+  const timer=setTimeout(()=>controller.abort(),timeout);
+  try{
+    const response=await fetch(url,{method,body,mode,credentials:'omit',cache:'no-store',
+      headers:contentType?{'Content-Type':contentType}:undefined,signal:controller.signal});
+    if(mode==='no-cors'){
+      const row={label,source:new URL(url).host,ok:true,status:response.status,type:response.type,ms:Math.round(performance.now()-start),result:'Ответ получен, содержимое скрыто браузером'};append(row);return {row,data:null};
+    }
+    const text=await response.text();
+    const accepted=expect?expect.includes(response.status):response.ok;
+    const data=parse==='json'&&accepted?JSON.parse(text):text;
+    const row={label,source:new URL(url).host,ok:accepted,status:response.status,ms:Math.round(performance.now()-start),result:`HTTP ${response.status}${expect&&accepted?' — контрольный ответ получен':''}`};append(row);return {row,data};
+  }catch(error){
+    const row={label,source:new URL(url).host,ok:false,ms:Math.round(performance.now()-start),error:error.name,
+      result:controller.signal.aborted?'Тайм-аут':error instanceof SyntaxError?'Ответ не является JSON':String(error.message)};
+    append(row);return {row,data:null};
+  }finally{clearTimeout(timer);}
+}
+function profileSummary(html){
+  const doc=new DOMParser().parseFromString(html,'text/html'), cells={};
+  for(const td of doc.querySelectorAll('td')){const key=td.textContent.trim();if(['Раса:','Уровень:','Сила:','Телосложение:','Ловкость:','Интеллект:','Выносливость:','Воля:'].includes(key))cells[key]=td.nextElementSibling?.textContent.trim();}
+  return Number(cells['Уровень:'])>0 && cells['Раса:'] && ['Сила:','Телосложение:','Ловкость:','Интеллект:','Выносливость:','Воля:'].every(k=>/^\d/.test(cells[k]||''));
+}
+async function run(){
+  const nick=$('nick').value.trim();if(!nick){$('summary').textContent='Введите ник.';return;}
+  $('run').disabled=true;$('results').replaceChildren();$('sent').textContent='';events=[];
+  $('summary').textContent='Проверяем соединение и текущую экипировку…';
+  try{
+    const encoded=encodeURIComponent(nick);
+    const [legacy,profile,equipment,health]=await Promise.all([
+      request('Старый источник профиля',`https://chaosage.space/getAvatarsDataByName?name=${encoded}`,{parse:'json'}),
+      request('Живой профиль через сервер',`${bridge}/api/profile-html?name=${encoded}`),
+      request('Надетые вещи напрямую',`https://chaosage.ru/sAPI2.php?user_name=${encoded}&request=user_equipment_list`,{parse:'json'}),
+      request('Доступность сервера',`${bridge}/health`,{parse:'json'}),
+      request('Клановая слава',`${bridge}/api/clan-rating-html`),
+      ...['user_fraction','clan_list_by_user_name'].map(async kind=>{
+        const direct=await request(kind==='user_fraction'?'Религия персонажа':'Место в клане',`https://chaosage.ru/sAPI2.php?user_name=${encoded}&request=${kind}`,{parse:'json'});
+        if(!direct.row.ok)await request(`Резерв: ${kind}`,`${bridge}/api/game-json?user_name=${encoded}&request=${kind}`,{parse:'json'});
+      }),
+    ]);
+    let items=equipment.data;
+    if(!equipment.row.ok||!validEquipmentList(items)){const backup=await request('Надетые вещи через сервер',`${bridge}/api/game-json?request=user_equipment_list&user_name=${encoded}`,{parse:'json'});items=backup.row.ok?backup.data:null;}
+    const validList=Boolean(validEquipmentList(items));
+    const ids=validList?slots.filter(slot=>Number(items[slot])>0):[];
+    append({label:'Проверка формата экипировки',source:'проверка данных',ok:validList,ms:0,result:validList?`Слотов: ${slots.length}; занято: ${ids.length}; пусто: ${slots.length-ids.length}`:'Ответ не содержит корректные значения всех слотов'});
+    const missingItems=[], runeIds=new Set();
+    for(let i=0;i<ids.length;i+=3)await Promise.all(ids.slice(i,i+3).map(async slot=>{
+      const id=items[slot];let result=await request(`Вещь: ${slotNames[slot]} #${id}`,`https://chaosage.ru/sAPI2.php?request=equipment_info&id=${encodeURIComponent(id)}`,{parse:'json'});
+      if(!result.row.ok||!result.data?.name)result=await request(`Резерв: ${slotNames[slot]} #${id}`,`${bridge}/api/game-json?request=equipment_info&id=${encodeURIComponent(id)}`,{parse:'json'});
+      if(!result.row.ok||!result.data?.name)missingItems.push(slotNames[slot]);
+      else if(/^\d+$/.test(String(result.data.breachRune))&&Number(result.data.breachRune)>0)runeIds.add(String(result.data.breachRune));
+    }));
+    for(const runeId of runeIds){
+      const direct=await request(`Руна Разлома #${runeId}`,`https://chaosage.ru/sAPI2.php?request=equipment_info&id=${runeId}`,{parse:'json'});
+      if(!direct.row.ok||!direct.data?.name)await request(`Резерв руны #${runeId}`,`${bridge}/api/game-json?request=equipment_info&id=${runeId}`,{parse:'json'});
+    }
+    let equipmentChanged=false;
+    if(validList){
+      let latest=await request('Повторная проверка надетых вещей',`https://chaosage.ru/sAPI2.php?user_name=${encoded}&request=user_equipment_list`,{parse:'json'});
+      if(!latest.row.ok||!validEquipmentList(latest.data))latest=await request('Повторная проверка через сервер',`${bridge}/api/game-json?request=user_equipment_list&user_name=${encoded}`,{parse:'json'});
+      if(latest.row.ok&&validEquipmentList(latest.data)){
+        equipmentChanged=slots.some(slot=>Number(items[slot])!==Number(latest.data[slot]));
+        append({label:'Изменение экипировки во время загрузки',source:'проверка данных',ok:!equipmentChanged,ms:0,result:equipmentChanged?'Надетые предметы изменились: повторите проверку':'Идентификаторы надетых предметов совпадают'});
+      }
+    }
+    const [jsonPost,simplePost]=await Promise.all([
+      request('Отчёт: JSON и предварительный запрос',`${bridge}/api/bug-report`,{method:'POST',contentType:'application/json',body:'{"schema":0}',expect:[400]}),
+      request('Отчёт: соединение без предварительного запроса',`${bridge}/api/bug-report`,{method:'POST',contentType:'text/plain',body:'{"schema":0}',expect:[415]}),
+    ]);
+    let opaque;
+    if(!health.row.ok)opaque=await request('Сервер: проверка доступности без чтения ответа',`${bridge}/health`,{mode:'no-cors'});
+    const validLiveProfile=profile.row.ok&&profileSummary(profile.data);
+    append({label:'Проверка формата профиля',source:'проверка данных',ok:Boolean(validLiveProfile),ms:0,result:validLiveProfile?'Уровень, раса и шесть характеристик найдены':'Не удалось прочитать обязательные поля живого профиля'});
+    let verdict=validLiveProfile?'Живой профиль получен. ':'Живой профиль через сервер не получен. ';
+    verdict+=validList?`Игра сообщила о ${ids.length} надетых вещах. `:'Список надетых вещей не получен. ';
+    if(missingItems.length)verdict+=`Не получены данные вещей: ${missingItems.join(', ')}. `;
+    if(equipmentChanged)verdict+='Экипировка изменилась в ходе проверки. ';
+    if(health.row.ok&&!jsonPost.row.ok&&simplePost.row.ok)verdict+='GET и простой POST работают, JSON POST — нет: нужно проверить предварительный запрос OPTIONS или фильтрацию JSON. ';
+    else if(!health.row.ok&&!opaque?.row.ok)verdict+='Соединение с сервером не устанавливается даже без чтения ответа: нужны браузерный код ошибки и проверка другой сети. ';
+    else if(!health.row.ok&&opaque?.row.ok)verdict+='Без чтения ответ приходит, а обычный запрос не работает: вероятна блокировка CORS; точная причина видна в консоли Chrome. ';
+    $('summary').textContent=verdict;
+    const report={schema:1,clientId:crypto.randomUUID(),createdAt:new Date().toISOString(),category:'import',nick,loadedNick:'',note:'',lastError:verdict.slice(0,250),
+      browser:{userAgent:navigator.userAgent.slice(0,350),language:navigator.language,online:navigator.onLine,page:location.origin+location.pathname},
+      events:(events.length<=34?events:[...events.filter(e=>!e.ok).slice(0,26),...events.filter(e=>e.ok).slice(-8)])
+        .map(e=>({...e,label:e.label.slice(0,100),result:e.result.slice(0,160),stage:'network_check'})),build:null};
+    report.events.unshift({at:new Date().toISOString(),stage:'diagnostic_version',version});
+    while(new TextEncoder().encode(JSON.stringify(report)).length>22000&&report.events.length>2){
+      const removable=report.events.findIndex((event,index)=>index>0&&event.ok);
+      report.events.splice(removable>0?removable:report.events.length-1,1);
+    }
+    if(jsonPost.row.ok){const sent=await request('Сохранение диагностики',`${bridge}/api/bug-report`,{method:'POST',contentType:'application/json',body:JSON.stringify(report),parse:'json'});$('sent').textContent=sent.row.ok&&sent.data?.id?`Диагностика сохранена. Номер: ${sent.data.id}`:'Диагностика не отправлена. Результаты показаны выше.';}
+    else $('sent').textContent='Сервер не принял контрольный запрос. Диагностика не отправлена; результаты показаны выше.';
+  }finally{$('run').disabled=false;}
+}
+$('run').addEventListener('click',()=>run().catch(error=>{$('summary').textContent=`Ошибка самой проверки: ${error.message}`;}));
+</script>
+</html>
