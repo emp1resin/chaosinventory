@@ -549,17 +549,17 @@ function modifireThings(state = [], action) {
 	} else if (action.type === 'Загрузка персонажа') {
 
 
-		state['Шлемы'] = action.modifireInformation[5].name !== undefined ? genModOn(action.modifireInformation[5], 'Шлемы') : genMFRNRSObj('Шлемы')
-		state['Амулеты'] = action.modifireInformation[6].name !== undefined ? genModOn(action.modifireInformation[6], 'Амулеты') : genMFRNRSObj('Амулеты')
-		state['Наручи'] = action.modifireInformation[0].name !== undefined ? genModOn(action.modifireInformation[0], 'Наручи') : genMFRNRSObj('Наручи')
-		state['Перчатки'] = action.modifireInformation[1].name !== undefined ? genModOn(action.modifireInformation[1], 'Перчатки') : genMFRNRSObj('Перчатки')
-		state['Доспехи'] = action.modifireInformation[10].name !== undefined ? genModOn(action.modifireInformation[10], 'Доспехи') : genMFRNRSObj('Доспехи')
-		state['Пояса'] = action.modifireInformation[3].name !== undefined ? genModOn(action.modifireInformation[3], 'Пояса') : genMFRNRSObj('Пояса')
-		state['Ботинки'] = action.modifireInformation[4].name !== undefined ? genModOn(action.modifireInformation[4], 'Ботинки') : genMFRNRSObj('Ботинки')
-		state['Кольца Справа'] = action.modifireInformation[9].name !== undefined ? genModOn(action.modifireInformation[9], 'Кольца Справа') : genMFRNRSObj('Кольца Справа')
-		state['Кольца Слева'] = action.modifireInformation[8].name !== undefined ? genModOn(action.modifireInformation[8], 'Кольца Слева') : genMFRNRSObj('Кольца Слева')
-		state['Оружие Справа'] = action.modifireInformation[2].name !== undefined ? genModOn(action.modifireInformation[2], 'Оружие Справа') : genMFRNRSObj('Оружие Справа')
-		state['Оружие Слева'] = action.modifireInformation[7].name !== undefined ? genModOn(action.modifireInformation[7], 'Оружие Слева') : genMFRNRSObj('Оружие Слева')
+		state['Шлемы'] = action.modifireInformation[5]?.name !== undefined ? genModOn(action.modifireInformation[5], 'Шлемы') : genMFRNRSObj('Шлемы')
+		state['Амулеты'] = action.modifireInformation[6]?.name !== undefined ? genModOn(action.modifireInformation[6], 'Амулеты') : genMFRNRSObj('Амулеты')
+		state['Наручи'] = action.modifireInformation[0]?.name !== undefined ? genModOn(action.modifireInformation[0], 'Наручи') : genMFRNRSObj('Наручи')
+		state['Перчатки'] = action.modifireInformation[1]?.name !== undefined ? genModOn(action.modifireInformation[1], 'Перчатки') : genMFRNRSObj('Перчатки')
+		state['Доспехи'] = action.modifireInformation[10]?.name !== undefined ? genModOn(action.modifireInformation[10], 'Доспехи') : genMFRNRSObj('Доспехи')
+		state['Пояса'] = action.modifireInformation[3]?.name !== undefined ? genModOn(action.modifireInformation[3], 'Пояса') : genMFRNRSObj('Пояса')
+		state['Ботинки'] = action.modifireInformation[4]?.name !== undefined ? genModOn(action.modifireInformation[4], 'Ботинки') : genMFRNRSObj('Ботинки')
+		state['Кольца Справа'] = action.modifireInformation[9]?.name !== undefined ? genModOn(action.modifireInformation[9], 'Кольца Справа') : genMFRNRSObj('Кольца Справа')
+		state['Кольца Слева'] = action.modifireInformation[8]?.name !== undefined ? genModOn(action.modifireInformation[8], 'Кольца Слева') : genMFRNRSObj('Кольца Слева')
+		state['Оружие Справа'] = action.modifireInformation[2]?.name !== undefined ? genModOn(action.modifireInformation[2], 'Оружие Справа') : genMFRNRSObj('Оружие Справа')
+		state['Оружие Слева'] = action.modifireInformation[7]?.name !== undefined ? genModOn(action.modifireInformation[7], 'Оружие Слева') : genMFRNRSObj('Оружие Слева')
 
 
 
