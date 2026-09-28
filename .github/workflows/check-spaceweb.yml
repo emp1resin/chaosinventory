@@ -18,5 +18,6 @@ jobs:
           for host in rahunzanof.temp.ruswtest.ru rahunzanof.temp.swtest.ru; do
             echo "--- $host ---"
             getent ahosts "$host" | head -2 || true
-            curl -sS -I --connect-timeout 5 --max-time 12 "https://$host/health" || true
+            curl -sS -i --connect-timeout 5 --max-time 12 "http://$host/health" | head -20 || true
+            curl -sSk -i --connect-timeout 5 --max-time 12 "https://$host/health" | head -20 || true
           done
