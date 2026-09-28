@@ -1,0 +1,38 @@
+name: Build SpaceWeb HTTP package
+
+on:
+  pull_request:
+    paths:
+      - 'backend/spaceweb/**'
+      - 'site-source/**'
+      - '.github/workflows/build-spaceweb-http.yml'
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: site-source/package-lock.json
+      - name: Install
+        run: npm ci --legacy-peer-deps
+        working-directory: site-source
+      - name: Build for the same-origin HTTP host
+        run: npm run build -- --base /
+        working-directory: site-source
+        env:
+          VITE_CHAOS_API_BASE: http://rahunzanof.temp.swtest.ru
+      - name: Package site and PHP API at document root
+        run: |
+          cp backend/spaceweb/index.php backend/spaceweb/.htaccess site-source/dist/
+          cd site-source/dist
+          zip -qr "$RUNNER_TEMP/chaosinventory-spaceweb-http.zip" .
+          unzip -l "$RUNNER_TEMP/chaosinventory-spaceweb-http.zip" | head -25
+      - uses: actions/upload-artifact@v4
+        with:
+          name: chaosinventory-spaceweb-http
+          path: ${{ runner.temp }}/chaosinventory-spaceweb-http.zip
+          retention-days: 14
