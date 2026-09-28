@@ -19,9 +19,18 @@ export function parseOfficialClanRating(html) {
 }
 
 export async function fetchOfficialClanGlory() {
-  const response = await fetch(clanRatingBridge);
-  if (!response.ok) throw new Error(`Рейтинг кланов: ${response.status}`);
-  return parseOfficialClanRating(await response.text());
+  try {
+    const response = await fetch('https://chaosage.ru/rating.php?type=2', { signal: AbortSignal.timeout(7000) });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const clans = parseOfficialClanRating(await response.text());
+    recordDiagnostic('clan_rating_direct_ok', { count: Object.keys(clans).length });
+    return clans;
+  } catch (error) {
+    recordDiagnostic('clan_rating_direct_failed', { message: String(error.message).slice(0, 120) });
+    const response = await fetch(clanRatingBridge, { signal: AbortSignal.timeout(10000) });
+    if (!response.ok) throw new Error(`Рейтинг кланов: ${response.status}`);
+    return parseOfficialClanRating(await response.text());
+  }
 }
 
 const emptyThings = {
@@ -98,6 +107,19 @@ export async function fetchCharacterProfile(name) {
     throw new Error('Пустой ответ');
   } catch (primaryError) {
     recordDiagnostic('profile_direct_failed', { error: primaryError.name, message: String(primaryError.message).slice(0, 120), ms: Date.now() - started });
+    const officialStarted = Date.now();
+    try {
+      const response = await fetch(`https://chaosage.ru/showInfo.php?avatar=${encodeURIComponent(nick)}`,
+        { signal: AbortSignal.timeout(8000) });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const profile = parseOfficialProfile(await response.text());
+      recordDiagnostic('profile_official_ok', { status: response.status, ms: Date.now() - officialStarted });
+      return { profile, fallback: true };
+    } catch (officialError) {
+      recordDiagnostic('profile_official_failed', {
+        error: officialError.name, message: String(officialError.message).slice(0, 120), ms: Date.now() - officialStarted,
+      });
+    }
     let response;
     const bridgeStarted = Date.now();
     const bridgeController = new AbortController();
