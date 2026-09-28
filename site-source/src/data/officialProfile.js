@@ -1,5 +1,6 @@
 const profileBridge = 'https://chaosinventory-data.emp1res1n.chatgpt.site/api/profile-html';
 const clanRatingBridge = 'https://chaosinventory-data.emp1res1n.chatgpt.site/api/clan-rating-html';
+import { recordDiagnostic } from './diagnostics';
 
 // The official clan rating publishes the current glory in the sixth column.
 // Only listed clans can be resolved; leave other clans for manual entry.
@@ -79,27 +80,44 @@ export function parseOfficialProfile(html) {
 
 export async function fetchCharacterProfile(name) {
   const nick = name.trim();
+  const started = Date.now();
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 5000);
   try {
     const response = await fetch(`https://chaosage.space/getAvatarsDataByName?name=${encodeURIComponent(nick)}`,
       { signal: controller.signal });
-    if (!response.ok) throw new Error(String(response.status));
+    if (!response.ok) {
+      recordDiagnostic('profile_direct_http', { status: response.status, ms: Date.now() - started });
+      throw new Error(String(response.status));
+    }
     const profile = await response.json();
-    if (profile?.out) return { profile, fallback: false };
+    if (profile?.out) {
+      recordDiagnostic('profile_direct_ok', { status: response.status, ms: Date.now() - started });
+      return { profile, fallback: false };
+    }
     throw new Error('Пустой ответ');
   } catch (primaryError) {
+    recordDiagnostic('profile_direct_failed', { error: primaryError.name, message: String(primaryError.message).slice(0, 120), ms: Date.now() - started });
     let response;
+    const bridgeStarted = Date.now();
+    const bridgeController = new AbortController();
+    const bridgeTimeout = setTimeout(() => bridgeController.abort(), 12000);
     try {
-      response = await fetch(`${profileBridge}?name=${encodeURIComponent(nick)}`);
+      response = await fetch(`${profileBridge}?name=${encodeURIComponent(nick)}`, { signal: bridgeController.signal });
     } catch (bridgeError) {
+      recordDiagnostic('profile_bridge_failed', { error: bridgeError.name, message: String(bridgeError.message).slice(0, 120), ms: Date.now() - bridgeStarted });
       throw new Error(`Не удалось получить профиль ни из игры, ни через резервный сервер (${bridgeError.message}).`);
+    } finally {
+      clearTimeout(bridgeTimeout);
     }
     if (!response.ok) {
+      recordDiagnostic('profile_bridge_http', { status: response.status, ms: Date.now() - bridgeStarted });
       const detail = await response.json().catch(() => ({}));
       throw new Error(`Не удалось загрузить персонажа через запасной источник: ${detail.error || response.status}`);
     }
-    return { profile: parseOfficialProfile(await response.text()), fallback: true };
+    const profile = parseOfficialProfile(await response.text());
+    recordDiagnostic('profile_bridge_ok', { status: response.status, ms: Date.now() - bridgeStarted });
+    return { profile, fallback: true };
   } finally {
     clearTimeout(timeout);
   }

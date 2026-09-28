@@ -1,5 +1,6 @@
 const gameBridge = 'https://chaosinventory-data.emp1res1n.chatgpt.site/api/game-json';
 const namedRequests = new Set(['user_equipment_list', 'user_fraction', 'clan_list_by_user_name']);
+import { recordDiagnostic, describeRequest } from './diagnostics';
 
 function bridgeUrlFor(url) {
 	const source = new URL(url);
@@ -16,13 +17,24 @@ function bridgeUrlFor(url) {
 }
 
 async function requestJson(url, timeoutMs) {
+	const started = Date.now();
+	const source = url.startsWith(gameBridge) ? 'bridge' : 'direct';
+	const path = describeRequest(url);
 	const controller = new AbortController();
 	const timeout = setTimeout(() => controller.abort(), timeoutMs);
 	try {
 		const response = await fetch(url, {signal: controller.signal});
-		if (!response.ok) throw new Error(`HTTP ${response.status}`);
+		if (!response.ok) {
+			recordDiagnostic('game_http', { source, path, status: response.status, ms: Date.now() - started });
+			throw new Error(`HTTP ${response.status}`);
+		}
 		const body = await response.text();
-		return body ? JSON.parse(body) : null;
+		const parsed = body ? JSON.parse(body) : null;
+		recordDiagnostic('game_ok', { source, path, status: response.status, ms: Date.now() - started });
+		return parsed;
+	} catch (error) {
+		recordDiagnostic('game_failed', { source, path, error: error.name, message: String(error.message).slice(0, 120), ms: Date.now() - started });
+		throw error;
 	} finally {
 		clearTimeout(timeout);
 	}

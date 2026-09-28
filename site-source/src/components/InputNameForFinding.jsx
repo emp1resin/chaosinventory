@@ -32,6 +32,8 @@ import allItems from './ItemsAll';
 import { resolveEquippedItems } from '../data/resolveEquipment';
 import { fetchGameJson, fetchOptionalGameJson } from '../data/gameApi';
 import { fetchCharacterProfile, fetchOfficialClanGlory } from '../data/officialProfile';
+import { beginImport, recordDiagnostic } from '../data/diagnostics';
+import BugReportButton from './BugReportButton';
 
 
 var nickArr = []
@@ -326,6 +328,7 @@ class InputNameForFinding extends React.Component {
 		super(props);
 		this.state = {
 			name: 'DestinyS',
+			loadedName: '',
 			loading: false,
 			error: '',
 			drawerResultsOpen: false
@@ -338,6 +341,7 @@ class InputNameForFinding extends React.Component {
 			this.setState({error: 'Введите ник персонажа.'});
 			return;
 		}
+		beginImport(x);
 
 		this.setState({
 			loading: true,
@@ -349,6 +353,7 @@ class InputNameForFinding extends React.Component {
 		// Загружаем список вещей и некоторые параметры игрока своим парсером
 		fetchCharacterProfile(x).catch(error => { throw new Error(`Профиль персонажа: ${error.message}`) })
 			.then(({profile: jsonData, fallback}) => {
+				recordDiagnostic('profile_parsed', { fallback });
 				if (!jsonData.out) throw new Error('Персонаж не найден.');
 
 				var urls = [
@@ -365,6 +370,7 @@ class InputNameForFinding extends React.Component {
 					fetchGameJson(urls[3]).catch(error => { throw new Error(`Список экипировки: ${error.message}`) }),
 				])
 					.then(result => {
+						recordDiagnostic('equipment_list_received', { slots: Object.values(result[3] || {}).filter(Boolean).length });
 						if (!result[3] || typeof result[3] !== 'object') {
 							throw new Error('Игра не вернула список надетых вещей.')
 						}
@@ -436,11 +442,14 @@ class InputNameForFinding extends React.Component {
 								// display text and can refer to several different items.
 								const { resolved, missing } = resolveEquippedItems(jsonData.out.things, result, allItems)
 								if (missing.length) {
+									recordDiagnostic('catalog_missing', { count: missing.length, item: missing[0].name });
 									throw new Error(`Нет базовых вещей в каталоге: ${missing.map(item => `${item.name} (#${item.originalId})`).join(', ')}`)
 								}
 								jsonData.out.things = resolved
+								recordDiagnostic('import_complete', { slots: result.filter(Boolean).length });
 								this.setState({
-									loading: false
+									loading: false,
+									loadedName: x.trim()
 								});
 
 
@@ -461,6 +470,7 @@ class InputNameForFinding extends React.Component {
 
 			})
 			.catch((error) => {
+				recordDiagnostic('import_failed', { message: String(error.message).slice(0, 240) });
 				console.error(error)
 				this.setState({loading: false, error: error.message || 'Не удалось загрузить персонажа.'})
 			})
@@ -605,6 +615,8 @@ class InputNameForFinding extends React.Component {
 				this.state.loading && < LinearProgress / >
 			}
 			{this.state.error && <Typography color="error" style={{marginTop: 8}}>{this.state.error}</Typography>}
+			<BugReportButton nick={this.state.name} lastError={this.state.error}
+				build={this.state.error ? null : this.props.reportState} loadedNick={this.state.loadedName} />
 
 			<
 			/div> <
@@ -633,4 +645,4 @@ class InputNameForFinding extends React.Component {
 }
 
 
-export default connect()(InputNameForFinding);
+export default connect(state => ({ reportState: state }))(InputNameForFinding);
