@@ -22,6 +22,10 @@ const profile = await read('/api/profile-html?name=Thrandu1l');
 assert.equal(profile.status, 200);
 const profileHtml = await profile.text();
 assert.ok(profileHtml.includes('Раса:') && profileHtml.includes('Thrandu1l'), 'Official character page was not returned');
+const cyrillicName = 'Ашалинда';
+const cyrillicProfile = await read(`/api/profile-html?name=${encodeURIComponent(cyrillicName)}`);
+assert.equal(cyrillicProfile.status, 200);
+assert.ok((await cyrillicProfile.text()).includes(cyrillicName), 'Cyrillic profile was not returned');
 
 const rating = await read('/api/avatar-rating-html');
 assert.equal(rating.status, 200);
