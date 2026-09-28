@@ -1,32 +1,49 @@
 import React from 'react';
 import Button from '@material-ui/core/Button';
 import Typography from '@material-ui/core/Typography';
-import { createBugReport, probeBridge, queueBugReport, sendBugReport } from '../data/diagnostics';
+import { createBugReport, pendingReportIdFor, probeBridge, queueBugReport, sendBugReport } from '../data/diagnostics';
 
 export default function BugReportButton({ nick, lastError, build, loadedNick, resetKey }) {
   const [sending, setSending] = React.useState(false);
   const [receipt, setReceipt] = React.useState('');
   const [sendError, setSendError] = React.useState('');
+  const [pendingId, setPendingId] = React.useState(() => pendingReportIdFor(nick));
   React.useEffect(() => {
+    const id = pendingReportIdFor(nick);
+    setPendingId(id);
     setReceipt('');
-    setSendError('');
-  }, [resetKey]);
+    setSendError(id ? `Отчёт №${id} ожидает отправки. Повторим автоматически при восстановлении связи.` : '');
+  }, [nick, resetKey]);
+
+  React.useEffect(() => {
+    const delivered = event => {
+      if (event.detail?.id !== pendingId) return;
+      setReceipt(event.detail.id);
+      setPendingId('');
+      setSendError('');
+    };
+    window.addEventListener('chaosinventory:report-delivered', delivered);
+    return () => window.removeEventListener('chaosinventory:report-delivered', delivered);
+  }, [pendingId]);
 
   async function submit() {
     setSending(true);
     setReceipt('');
     setSendError('');
-    await probeBridge();
-    const category = /Вещь|каталог|экипировк|руна/i.test(lastError) ? 'equipment' :
-      lastError ? 'import' : 'other';
-    const report = createBugReport({ nick, category, lastError, build, loadedNick });
+    let report;
     try {
+      await probeBridge();
+      const category = /Вещь|каталог|экипировк|руна/i.test(lastError) ? 'equipment' :
+        lastError ? 'import' : 'other';
+      report = createBugReport({ nick, category, lastError, build, loadedNick });
       setReceipt(await sendBugReport(report));
     } catch (error) {
-      const queued = queueBugReport(report);
+      const queued = report && queueBugReport(report);
+      if (queued) setPendingId(report.clientId);
+      const reason = error.name === 'AbortError' ? 'тайм-аут' : String(error.message || error.name).slice(0, 100);
       setSendError(queued
-        ? 'Сервер пока недоступен. Отчёт ожидает отправки и уйдёт автоматически при восстановлении связи.'
-        : `Не удалось сохранить отчёт (${error.message}). Повторите позже.`);
+        ? `Отчёт №${report.clientId} ожидает отправки (${reason}). Повторим автоматически при восстановлении связи.`
+        : `Не удалось сохранить отчёт (${reason}). Повторите позже.`);
     } finally {
       setSending(false);
     }

@@ -113,18 +113,24 @@ export function queueBugReport(report) {
   } catch { return false; }
 }
 
+export function pendingReportIdFor(nick) {
+  return pendingReports().filter(report => report.nick === nick).at(-1)?.clientId || '';
+}
+
 let flushing = false;
 export async function flushPendingReports() {
   if (flushing || !navigator.onLine) return;
   flushing = true;
   try {
     for (const report of pendingReports()) {
-      try { await sendBugReport(report); }
+      let id;
+      try { id = await sendBugReport(report); }
       catch { break; }
       try {
         const remaining = pendingReports().filter(item => item.clientId !== report.clientId);
         localStorage.setItem(queueKey, JSON.stringify(remaining));
-      } catch { break; }
+      } catch { /* The server has already saved it; its UUID makes retries safe. */ }
+      window.dispatchEvent(new CustomEvent('chaosinventory:report-delivered', { detail: { id } }));
     }
   } finally { flushing = false; }
 }
@@ -132,5 +138,6 @@ export async function flushPendingReports() {
 export function startReportRetry() {
   setTimeout(flushPendingReports, 3000);
   window.addEventListener('online', flushPendingReports);
+  window.addEventListener('focus', flushPendingReports);
   setInterval(flushPendingReports, 120_000);
 }
