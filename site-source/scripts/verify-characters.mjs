@@ -4,7 +4,9 @@ import { createServer } from 'vite';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import assert from 'node:assert/strict';
+import { load } from 'cheerio';
 import { resolveEquippedItems } from '../src/data/resolveEquipment.js';
+import { parseClans, profileFromCells } from '../src/data/officialProfile.js';
 
 const execFileAsync = promisify(execFile);
 const names = process.env.VERIFY_NAME ? [process.env.VERIFY_NAME] : ['mellstroy', 'destinys', 'LICHonTHEbeach', 'Thrandu1l'];
@@ -20,6 +22,21 @@ async function json(url) {
   const { stdout } = await execFileAsync('curl', ['-fLsS', '--max-time', '30', url], { maxBuffer: 2_000_000 });
   if (cacheFile) { await mkdir(cacheDir, { recursive: true }); await writeFile(cacheFile, stdout); }
   return stdout ? JSON.parse(stdout) : null;
+}
+
+async function officialProfile(name) {
+  const url = `https://chaosage.ru/showInfo.php?avatar=${encodeURIComponent(name)}`;
+  const { stdout: html } = await execFileAsync('curl', ['-fLsS', '--max-time', '30', url], { maxBuffer: 2_000_000 });
+  const $ = load(html);
+  const cells = {};
+  const labels = new Set(['Раса:', 'Уровень:', 'Профессия:', 'Клан:', 'Религия:',
+    'Сила:', 'Телосложение:', 'Ловкость:', 'Интеллект:', 'Выносливость:', 'Воля:']);
+  const scope = $('[name="params"]').length ? $('[name="params"] td') : $('td');
+  scope.each((_, cell) => {
+    const label = $(cell).text().replace(/\s+/g, ' ').trim();
+    if (labels.has(label)) cells[label] = $(cell).next('td').first().text();
+  });
+  return profileFromCells(cells);
 }
 
 async function itemWithRune(item) {
@@ -84,17 +101,19 @@ try {
     server.ssrLoadModule('/src/components/Results.jsx'),
     server.ssrLoadModule('/src/components/ItemsAll.jsx'),
   ]);
-  const common = await json('https://chaosage.space/religionAndClansData');
+  const common = { clansArr: parseClans(await json('https://chaosage.ru/sAPI2.php?request=clans')) };
   let state = reducer(undefined, { type: '@@INIT' });
   for (const name of names) {
     const [profile, equipment, fraction, clanList] = await Promise.all([
-      json(`https://chaosage.space/getAvatarsDataByName?name=${encodeURIComponent(name)}`),
+      officialProfile(name),
       json(`https://chaosage.ru/sAPI2.php?user_name=${name}&request=user_equipment_list`),
       json(`https://chaosage.ru/sAPI2.php?user_name=${name}&request=user_fraction`),
       json(`https://chaosage.ru/sAPI2.php?user_name=${name}&request=clan_list_by_user_name`),
     ]);
     if (!profile?.out || !equipment) throw new Error(`Missing profile or equipment: ${name}`);
-    const items = await Promise.all(slots.map((slot) => json(`https://chaosage.ru/sAPI2.php?id=${equipment[slot]}&request=equipment_info`).then(itemWithRune)));
+    const items = await Promise.all(slots.map((slot) => Number(equipment[slot]) > 0
+      ? json(`https://chaosage.ru/sAPI2.php?id=${equipment[slot]}&request=equipment_info`).then(itemWithRune)
+      : null));
     const {resolved, missing} = resolveEquippedItems(profile.out.things, items, allItems);
     assert.deepEqual(missing, [], `${name}: equipped base item missing from FAQ`);
     profile.out.things = resolved;

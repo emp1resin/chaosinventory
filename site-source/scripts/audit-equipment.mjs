@@ -54,11 +54,8 @@ console.log(JSON.stringify({faqCategories: faqPages.map(p => ({type:p.type, coun
   missing, removed}, null, 2));
 
 const characterResults = await pooled(characters, 3, async name => {
-  const [profile, equipped] = await Promise.all([
-    json(`https://chaosage.space/getAvatarsDataByName?name=${encodeURIComponent(name)}`),
-    json(`${base}/sAPI2.php?user_name=${encodeURIComponent(name)}&request=user_equipment_list`),
-  ]);
-  if (!profile.out || !equipped) throw new Error('Empty character API response');
+  const equipped = await json(`${base}/sAPI2.php?user_name=${encodeURIComponent(name)}&request=user_equipment_list`);
+  if (!equipped?.user_id) throw new Error('Empty official equipment API response');
   const items = await pooled(slots.filter(slot => Number(equipped[slot]) > 0), 6, async slot => {
     const data = await json(`${base}/sAPI2.php?id=${equipped[slot]}&request=equipment_info`);
     const item = byId.get(String(data.original_id));

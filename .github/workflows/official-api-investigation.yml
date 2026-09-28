@@ -37,6 +37,13 @@ jobs:
       - name: Build for GitHub Pages without publishing
         run: npm run build -- --base /chaosinventory/
         working-directory: site-source
+      - name: Ensure compiled site never contacts the former developer services
+        run: |
+          if rg -q 'chaosage\.space|chaosage\.app|getAvatarsDataByName|religionAndClansData' dist/assets --glob '*.js'; then
+            echo 'Former developer API found in the published JavaScript bundle'
+            exit 1
+          fi
+        working-directory: site-source
       - name: Install isolated browser test runner
         run: |
           npm install --prefix /tmp/chaosinventory-browser-qa --no-package-lock --no-save playwright@1.62.1
