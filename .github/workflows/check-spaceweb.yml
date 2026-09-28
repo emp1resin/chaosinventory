@@ -21,16 +21,16 @@ jobs:
             curl -sS -i --connect-timeout 5 --max-time 12 "http://$host/health" | head -20 || true
             curl -sSk -i --connect-timeout 5 --max-time 12 "https://$host/health" | head -20 || true
           done
-      - name: Probe HTTPS preview domain
+      - name: Probe public HTTP preview domain
         run: |
           curl -fsS --connect-timeout 5 --max-time 20 -D /tmp/preview-headers.txt \
-            'https://chaosinventory.online.swtest.ru/health' -o /tmp/preview-health.json
+            'http://chaosinventory.online.swtest.ru/health' -o /tmp/preview-health.json
           head -15 /tmp/preview-headers.txt
           cat /tmp/preview-health.json
           echo
           curl -sS --connect-timeout 5 --max-time 25 \
             -w 'profile_http=%{http_code} bytes=%{size_download}\\n' \
-            'https://chaosinventory.online.swtest.ru/api/profile-html?name=Thrandu1l' \
+            'http://chaosinventory.online.swtest.ru/api/profile-html?name=Thrandu1l' \
             -o /tmp/preview-profile.html
       - name: Probe official game from deployed PHP bridge
         run: |
