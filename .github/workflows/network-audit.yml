@@ -4,6 +4,7 @@ on:
     paths:
       - 'site-source/scripts/audit-network.mjs'
       - 'site-source/scripts/test-network-failures.mjs'
+      - 'site-source/scripts/audit-clan-glory.mjs'
       - 'diagnostics/index.html'
       - '.github/workflows/network-audit.yml'
 permissions:
@@ -25,3 +26,8 @@ jobs:
       - name: Reproduce failures in current production modules
         working-directory: site-source
         run: node --experimental-vm-modules scripts/test-network-failures.mjs
+      - name: Compare clan positions on live character data without changing source
+        working-directory: site-source
+        env:
+          NODE_ENV: production
+        run: node scripts/audit-clan-glory.mjs
