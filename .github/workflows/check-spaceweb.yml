@@ -1,0 +1,15 @@
+name: Check SpaceWeb PHP backend
+
+on:
+  pull_request:
+    paths:
+      - 'backend/spaceweb/**'
+      - '.github/workflows/check-spaceweb.yml'
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check PHP syntax
+        run: php -l backend/spaceweb/index.php
