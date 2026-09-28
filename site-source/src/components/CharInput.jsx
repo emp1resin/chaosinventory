@@ -327,7 +327,7 @@ class CharInput extends React.Component {
 											  id: 'religion',
 											}}
 										>
-											{this.state.religionsList.map((char) =>
+											{[...new Set([...this.state.religionsList, this.props.religion])].map((char) =>
 													<MenuItem key={char} value={char}>{char}</MenuItem>
 												  )
 											}
@@ -433,7 +433,7 @@ class CharInput extends React.Component {
 											}}
 										>
 										
-										{this.state.clansList.map((char) =>
+										{[...new Set([...this.state.clansList, this.props.clan])].map((char) =>
 													<MenuItem key={char} value={char}>{char}</MenuItem>
 												  )
 											}

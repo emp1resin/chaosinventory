@@ -31,6 +31,7 @@ import Results from './Results';
 import allItems from './ItemsAll';
 import { resolveEquippedItems } from '../data/resolveEquipment';
 import { fetchGameJson, fetchOptionalGameJson } from '../data/gameApi';
+import { fetchCharacterProfile } from '../data/officialProfile';
 
 
 var nickArr = []
@@ -350,8 +351,8 @@ class InputNameForFinding extends React.Component {
 
 
 		// Загружаем список вещей и некоторые параметры игрока своим парсером
-		fetchGameJson(`https://chaosage.space/getAvatarsDataByName?name=${encodeURIComponent(x.trim())}`)
-			.then((jsonData) => {
+		fetchCharacterProfile(x)
+			.then(({profile: jsonData, fallback}) => {
 				if (!jsonData.out) throw new Error('Персонаж не найден.');
 
 				var urls = [
@@ -361,7 +362,7 @@ class InputNameForFinding extends React.Component {
 					  `https://chaosage.ru/sAPI2.php?user_name=${encodeURIComponent(x.trim())}&request=user_equipment_list`,
 					]
 				return Promise.all([
-					fetchOptionalGameJson(urls[0]),
+					fallback ? Promise.resolve(null) : fetchOptionalGameJson(urls[0]),
 					fetchOptionalGameJson(urls[1]),
 					fetchOptionalGameJson(urls[2]),
 					fetchGameJson(urls[3]),
