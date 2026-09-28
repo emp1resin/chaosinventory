@@ -19,7 +19,7 @@ export function beginImport(nick) {
 }
 
 export function describeRequest(url) {
-  const parsed = new URL(url, location.href);
+  const parsed = new URL(url, globalThis.location?.href || 'http://localhost/');
   return parsed.pathname === '/sAPI2.php' || parsed.pathname === '/api/game-json'
     ? `${parsed.pathname}:${parsed.searchParams.get('request') || 'unknown'}`
     : parsed.pathname;
