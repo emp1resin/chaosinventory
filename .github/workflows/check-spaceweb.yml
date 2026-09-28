@@ -21,3 +21,11 @@ jobs:
             curl -sS -i --connect-timeout 5 --max-time 12 "http://$host/health" | head -20 || true
             curl -sSk -i --connect-timeout 5 --max-time 12 "https://$host/health" | head -20 || true
           done
+      - name: Probe official game from deployed PHP bridge
+        run: |
+          curl -sS --connect-timeout 5 --max-time 20 \
+            -w '\nprofile_http=%{http_code} bytes=%{size_download}\n' \
+            'http://rahunzanof.temp.swtest.ru/api/profile-html?name=Thrandu1l' \
+            -o /tmp/chaos-profile.txt
+          head -c 150 /tmp/chaos-profile.txt
+          echo
