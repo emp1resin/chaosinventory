@@ -4,7 +4,9 @@ declare(strict_types=1);
 // SpaceWeb's shared PHP hosting counterpart of backend/worker.mjs.
 // Put this directory in the document root; configure the optional report database
 // with environment variables, never with credentials in a public repository.
-const FRONTEND_ORIGINS = ['https://emp1resin.github.io', 'https://chaosinventory.emp1res1n.chatgpt.site', 'http://rahunzanof.temp.swtest.ru'];
+const FRONTEND_ORIGINS = ['https://emp1resin.github.io', 'https://chaosinventory.emp1res1n.chatgpt.site',
+    'http://rahunzanof.temp.swtest.ru', 'http://chaosinventory.online', 'https://chaosinventory.online',
+    'http://www.chaosinventory.online', 'https://www.chaosinventory.online'];
 const GAME_REQUESTS_BY_NAME = ['user_equipment_list', 'user_fraction', 'clan_list_by_user_name', 'user_religionBonuses'];
 
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
