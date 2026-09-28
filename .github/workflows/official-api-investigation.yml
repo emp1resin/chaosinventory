@@ -1,0 +1,28 @@
+name: Official API contracts (no deployment)
+on:
+  pull_request:
+    paths:
+      - 'site-source/scripts/probe-official-api.mjs'
+      - '.github/workflows/official-api-investigation.yml'
+permissions:
+  contents: read
+jobs:
+  contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci --legacy-peer-deps
+        working-directory: site-source
+      - name: Inspect public official API contracts
+        run: node scripts/probe-official-api.mjs
+        working-directory: site-source
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: official-api-observations
+          path: site-source/official-api-observations
+          retention-days: 7
