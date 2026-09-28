@@ -78,8 +78,8 @@ try{
  await selects.nth(0).click();await page.getByRole('option',{name:'Thrandu1l',exact:true}).click();
  await selects.nth(1).click();await page.getByRole('option',{name:'Thrand with elixir',exact:true}).click();
  await page.getByText('Выберите два сохранённых билда.').waitFor({state:'hidden'});
- const attackRow=page.getByRole('row').filter({has:page.getByRole('rowheader',{name:'Атака',exact:true})});
- const comparedAttack=Number(await attackRow.getByRole('cell').nth(1).innerText());
+ const attackRow=page.locator('.compare-drawer tbody tr').filter({has:page.locator('th',{hasText:/^Атака$/})});
+ const comparedAttack=Number(await attackRow.locator('td').nth(1).innerText());
  assert.equal(comparedAttack,attack,'Comparison must retain elixir attack');
  await closeDrawer();
  console.log('UI_COMPARE_OK saves and elixir effect retained');
