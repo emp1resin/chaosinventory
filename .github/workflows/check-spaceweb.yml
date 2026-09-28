@@ -29,3 +29,13 @@ jobs:
             -o /tmp/chaos-profile.txt
           head -c 150 /tmp/chaos-profile.txt
           echo
+      - name: Probe CORS and official clans API over HTTP
+        run: |
+          curl -sS --connect-timeout 5 --max-time 20 -D /tmp/chaos-headers.txt \
+            -H 'Origin: https://emp1resin.github.io' \
+            -w 'clans_http=%{http_code} bytes=%{size_download}\n' \
+            'http://rahunzanof.temp.swtest.ru/api/game-json?request=clans' \
+            -o /tmp/chaos-clans.json
+          grep -i '^Access-Control-Allow-Origin:' /tmp/chaos-headers.txt || true
+          head -c 160 /tmp/chaos-clans.json
+          echo
