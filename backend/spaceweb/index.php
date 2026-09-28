@@ -87,7 +87,29 @@ if ($path === '/api/bug-report') {
     $dsn = getenv('CHAOS_REPORT_DSN');
     $user = getenv('CHAOS_REPORT_USER');
     $password = getenv('CHAOS_REPORT_PASSWORD');
-    if (!$dsn) json_out(['error' => 'Хранилище отчётов временно недоступно'], 503);
+    if (!$dsn) {
+        // The free plan has a writable account directory outside public_html.
+        // Each report has its own file; files are never served by the web server.
+        $directory = dirname(__DIR__) . '/.chaosinventory-reports';
+        if (!is_dir($directory) && !mkdir($directory, 0700) && !is_dir($directory)) {
+            json_out(['error' => 'Хранилище отчётов временно недоступно'], 503);
+        }
+        $file = $directory . '/' . strtolower($report['clientId']) . '.json';
+        if (is_file($file)) {
+            json_out(['id' => $report['clientId'], 'createdAt' => gmdate('Y-m-d\TH:i:s\Z')], 201);
+        }
+        $handle = fopen($file, 'x');
+        if ($handle === false) json_out(['error' => 'Не удалось сохранить отчёт'], 503);
+        try {
+            if (fwrite($handle, $raw) !== strlen($raw)) {
+                unlink($file);
+                json_out(['error' => 'Не удалось сохранить отчёт'], 503);
+            }
+        } finally {
+            fclose($handle);
+        }
+        json_out(['id' => $report['clientId'], 'createdAt' => gmdate('Y-m-d\TH:i:s\Z')], 201);
+    }
     try {
         $db = new PDO($dsn, $user ?: '', $password ?: '', [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
         $created = gmdate('Y-m-d\TH:i:s\Z');
