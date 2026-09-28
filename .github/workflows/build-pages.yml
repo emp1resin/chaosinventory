@@ -27,6 +27,8 @@ jobs:
       - name: Build for Pages
         run: npm run build -- --base /chaosinventory/
         working-directory: site-source
+        env:
+          VITE_CHAOS_API_BASE: ${{ vars.CHAOS_API_BASE }}
       - name: Update published files
         run: |
           cp -a site-source/dist/. ./

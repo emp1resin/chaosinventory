@@ -1,0 +1,52 @@
+name: Check SpaceWeb PHP backend
+
+on:
+  pull_request:
+    paths:
+      - 'backend/spaceweb/**'
+      - '.github/workflows/check-spaceweb.yml'
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check PHP syntax
+        run: php -l backend/spaceweb/index.php
+      - name: Probe SpaceWeb test address before switching production
+        run: |
+          for host in rahunzanof.temp.ruswtest.ru rahunzanof.temp.swtest.ru; do
+            echo "--- $host ---"
+            getent ahosts "$host" | head -2 || true
+            curl -sS -i --connect-timeout 5 --max-time 12 "http://$host/health" | head -20 || true
+            curl -sSk -i --connect-timeout 5 --max-time 12 "https://$host/health" | head -20 || true
+          done
+      - name: Probe public HTTP preview domain
+        run: |
+          curl -fsS --connect-timeout 5 --max-time 20 -D /tmp/preview-headers.txt \
+            'http://chaosinventory.online.swtest.ru/health' -o /tmp/preview-health.json
+          head -15 /tmp/preview-headers.txt
+          cat /tmp/preview-health.json
+          echo
+          curl -sS --connect-timeout 5 --max-time 25 \
+            -w 'profile_http=%{http_code} bytes=%{size_download}\\n' \
+            'http://chaosinventory.online.swtest.ru/api/profile-html?name=Thrandu1l' \
+            -o /tmp/preview-profile.html
+      - name: Probe official game from deployed PHP bridge
+        run: |
+          curl -sS --connect-timeout 5 --max-time 20 \
+            -w '\nprofile_http=%{http_code} bytes=%{size_download}\n' \
+            'http://rahunzanof.temp.swtest.ru/api/profile-html?name=Thrandu1l' \
+            -o /tmp/chaos-profile.txt
+          head -c 150 /tmp/chaos-profile.txt
+          echo
+      - name: Probe CORS and official clans API over HTTP
+        run: |
+          curl -sS --connect-timeout 5 --max-time 20 -D /tmp/chaos-headers.txt \
+            -H 'Origin: https://emp1resin.github.io' \
+            -w 'clans_http=%{http_code} bytes=%{size_download}\n' \
+            'http://rahunzanof.temp.swtest.ru/api/game-json?request=clans' \
+            -o /tmp/chaos-clans.json
+          grep -i '^Access-Control-Allow-Origin:' /tmp/chaos-headers.txt || true
+          head -c 160 /tmp/chaos-clans.json
+          echo
