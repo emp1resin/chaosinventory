@@ -25,6 +25,7 @@ jobs:
         run: |
           node scripts/test-official-api.mjs
           node scripts/test-import-reset.mjs
+          node scripts/test-golem-support.mjs
           node scripts/test-runes.mjs
           node scripts/test-equipment-resolution.mjs
           node scripts/test-item-focus.mjs

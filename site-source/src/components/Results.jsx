@@ -21,7 +21,7 @@ import Badge from '@material-ui/core/Badge';
 import { Grid } from '@material-ui/core';
 import { findBreachRune } from '../data/breachRunes';
 import { hasReligionBonuses, sanitizeReligionData } from '../data/religions';
-import { golemSupportPercent } from '../data/golem';
+import { golemSupportDetails } from '../data/golem';
 import { applyElixirs, elixirById } from '../data/elixirs';
 
 export class Result extends React.Component {
@@ -4111,9 +4111,10 @@ export class Result extends React.Component {
 		
 		stability *= 1+koeffClansGlory
 
-		// Provisional Support bonus. The FAQ specifies efficiency increases but not
-		// their exact stacking or rounding with other character effects.
-		const golemSupport = golemSupportPercent(this.props.golem);
+		// Support applies after clan glory. Only the three supplied control points
+		// are exact; other combinations are explicitly marked as estimates.
+		const golemSupportInfo = golemSupportDetails(this.props.golem);
+		const golemSupport = golemSupportInfo.percent;
 		if (golemSupport > 0) {
 			const supportMultiplier = 1 + golemSupport / 100;
 			minDamage *= supportMultiplier;
@@ -4132,6 +4133,12 @@ export class Result extends React.Component {
 			armorPenetration *= supportMultiplier;
 			regenerationHP *= supportMultiplier;
 			regenerationMP *= supportMultiplier;
+			resistDamage *= supportMultiplier;
+			powerOfDark *= supportMultiplier;
+			powerOfLight *= supportMultiplier;
+			powerOfDestruction *= supportMultiplier;
+			powerOfDefiler *= supportMultiplier;
+			powerOfPray *= supportMultiplier;
 		}
 
 		// Active elixirs are chosen manually; overlapping stats are exclusive in
@@ -4789,7 +4796,7 @@ export class Result extends React.Component {
 							
 							{this.props.clan !== 'Нет' && (this.props.clanGlory == null || this.props.clanPosition == null) &&
 								<p style={{margin: 0, color: '#b45f14'}}><b>Клановая слава не рассчитана:</b> укажите славу и позицию в разделе персонажа.</p>}
-							{golemSupport > 0 && <p style={{margin: 0}}><b>Голем, Поддержка:</b> +{golemSupport}% к основным параметрам (предварительный расчёт).</p>}
+							{golemSupport > 0 && <p style={{margin: 0}}><b>Голем, Поддержка:</b> +{golemSupport}% к параметрам ({golemSupportInfo.source === 'example' ? 'по контрольной таблице' : golemSupportInfo.source === 'manual' ? 'указано вручную' : 'предварительный расчёт'}).</p>}
 							{activeElixirs.length > 0 && <p style={{margin: 0}}><b>Эликсиры:</b> {activeElixirs.map(id => elixirById[id]?.name).filter(Boolean).join(', ')} (проценты и фиксированные прибавки рассчитаны предварительно).</p>}
 							{this.props.clanGlory > 0 && this.props.clanPosition != null && <>
 								<Divider style={{marginTop: 5, marginBottom: 5}} variant="middle" />
