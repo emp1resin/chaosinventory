@@ -28,7 +28,9 @@ try {
   first = reducer(first, { type: 'Изменить Турнирная руна' });
   first = reducer(first, { type: 'Смена Блага Жизни', data: '3' });
   first = reducer(first, { type: 'Смена голема', data: { type: 'Золотой', mode: 'Поддержка' } });
-  assert.equal(golemSupportPercent(first.golem), 5.5);
+  assert.equal(golemSupportPercent(first.golem), 5);
+  first = reducer(first, { type: 'Смена голема', data: { supportManual: '7.2' } });
+  assert.equal(golemSupportPercent(first.golem), 7.2);
   first = reducer(first, { type: 'Изменить мастерство навыка Магия стихий', data: 3 });
   first = reducer(first, { type: 'Переключить эликсир', data: 'attack' });
   first = reducer(first, { type: 'Переключить эликсир', data: 'armor' });
@@ -57,7 +59,7 @@ try {
   assert.equal(first.golem.type, 'Золотой');
 
   const saved = reducer(second, { type: 'Загрузить все данные игрока', data: first });
-  assert.equal(golemSupportPercent(saved.golem), 5.5);
+  assert.equal(golemSupportPercent(saved.golem), 7.2);
   assert.equal(saved.allSkillsMaster.elementSkills, 3);
   assert.deepEqual(saved.elixirs, ['armor', 'greatAttack']);
   const olderSave = reducer(saved, { type: 'Загрузить все данные игрока', data: { ...first, golem: undefined, elixirs: undefined } });

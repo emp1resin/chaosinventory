@@ -1,6 +1,7 @@
-const profileBridge = 'https://chaosinventory-data.emp1res1n.chatgpt.site/api/profile-html';
-const clanRatingBridge = 'https://chaosinventory-data.emp1res1n.chatgpt.site/api/clan-rating-html';
-import { recordDiagnostic } from './diagnostics';
+import { apiBase } from './apiConfig.js';
+import { ApiError, requestData } from './apiTransport.js';
+import { fetchGameJson, gameUrl } from './gameApi.js';
+import { recordDiagnostic } from './diagnostics.js';
 
 // The official clan rating publishes the current glory in the sixth column.
 // Only listed clans can be resolved; leave other clans for manual entry.
@@ -18,13 +19,23 @@ export function parseOfficialClanRating(html) {
   return clans;
 }
 
-export async function fetchOfficialClanGlory() {
-  const response = await fetch(clanRatingBridge);
-  if (!response.ok) throw new Error(`Рейтинг кланов: ${response.status}`);
-  return parseOfficialClanRating(await response.text());
+export function parseClans(json) {
+  if (!json || typeof json !== 'object' || !Object.keys(json).length) throw new ApiError('INVALID_CLANS', 'Список кланов пуст или повреждён.');
+  const clans = {};
+  for (const row of Object.values(json)) {
+    if (!row || typeof row.clan_name !== 'string' || !row.clan_name.trim() ||
+        row.clan_glory == null || row.clan_glory === '' || !Number.isFinite(Number(row.clan_glory))) {
+      throw new ApiError('INVALID_CLANS', 'Формат списка кланов изменился.');
+    }
+    clans[row.clan_name.trim().normalize('NFC')] = Number(row.clan_glory);
+  }
+  return clans;
+}
+export async function fetchOfficialClanGlory(options = {}) {
+  return parseClans(await fetchGameJson(gameUrl('clans'), {...options, validate:parseClans}));
 }
 
-const emptyThings = {
+export const emptyThings = {
   'Шлем': 'Шлем', 'Амулет': 'Амулет', 'Наручи': 'Наручи',
   'Перчатки': 'Перчатки', 'Доспехи': 'Доспех', 'Пояс': 'Пояс',
   'Ботинки': 'Обувь', 'Кольцо слева': 'Кольцо', 'Кольцо справа': 'Кольцо',
@@ -42,8 +53,8 @@ export function profileFromCells(cells) {
   const value = key => String(cells[key] || '').replace(/\s+/g, ' ').trim();
   const base = key => {
     const displayed = value(key);
-    const match = displayed.match(/\((\d+)\s*\+/);
-    return Number(match ? match[1] : displayed.match(/^\d+/)?.[0]);
+    const match = displayed.match(/^\d+\s*\(\s*(\d+)\s*(?:[+−-]\s*\d+(?:\.\d+)?\s*)?\)$/);
+    return match ? Number(match[1]) : /^\d+$/.test(displayed) ? Number(displayed) : NaN;
   };
   const level = Number(value('Уровень:'));
   const race = value('Раса:').replace(/\s*\(\d+\)\s*$/, '');
@@ -52,7 +63,7 @@ export function profileFromCells(cells) {
     .map(([label, key]) => [key, base(label)]));
 
   if (!race || !Number.isInteger(level) || level < 1 ||
-      Object.values(characteristics).some(n => !Number.isFinite(n))) {
+      Object.values(characteristics).some(n => !Number.isSafeInteger(n) || n < 0) || !value('Клан:') || !value('Религия:')) {
     throw new Error('На открытой странице не найдены основные данные персонажа.');
   }
 
@@ -68,83 +79,25 @@ export function profileFromCells(cells) {
 export function parseOfficialProfile(html) {
   const doc = new DOMParser().parseFromString(html, 'text/html');
   const cells = {};
-  for (const td of doc.querySelectorAll('td')) {
+  const scope = doc.querySelector?.('[name="params"]') || doc;
+  for (const td of scope.querySelectorAll('td')) {
     const label = td.textContent.replace(/\s+/g, ' ').trim();
     if ((label in fields || ['Раса:', 'Уровень:', 'Профессия:', 'Клан:', 'Религия:'].includes(label)) &&
         td.nextElementSibling?.tagName === 'TD') {
-      cells[label] = td.nextElementSibling.textContent;
+      const value = td.nextElementSibling.textContent;
+      if (cells[label] != null && cells[label].replace(/\s+/g,' ').trim() !== value.replace(/\s+/g,' ').trim()) throw new ApiError('AMBIGUOUS_PROFILE', `Страница содержит разные значения поля «${label}».`);
+      cells[label] = value;
     }
   }
   return profileFromCells(cells);
 }
 
-async function fetchCachedProfile(nick) {
-  const url = `${import.meta.env.BASE_URL}profile-cache.json`;
-  const response = await fetch(url, { signal: AbortSignal.timeout(7000) });
-  if (!response.ok) throw new Error(`HTTP ${response.status}`);
-  const cached = (await response.json()).profiles?.[nick.normalize('NFC').toLocaleLowerCase('ru-RU')];
-  if (!cached?.cells) throw new Error('Персонажа пока нет в запасном каталоге');
-  const profile = profileFromCells(cached.cells);
-  recordDiagnostic('profile_cache_ok', { updatedAt: cached.updatedAt });
-  return profile;
-}
-
-export async function fetchCharacterProfile(name) {
-  const nick = name.trim();
-  const started = Date.now();
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 5000);
-  try {
-    const response = await fetch(`https://chaosage.space/getAvatarsDataByName?name=${encodeURIComponent(nick)}`,
-      { signal: controller.signal });
-    if (!response.ok) {
-      recordDiagnostic('profile_direct_http', { status: response.status, ms: Date.now() - started });
-      throw new Error(String(response.status));
-    }
-    const profile = await response.json();
-    if (profile?.out) {
-      recordDiagnostic('profile_direct_ok', { status: response.status, ms: Date.now() - started });
-      return { profile, fallback: false };
-    }
-    throw new Error('Пустой ответ');
-  } catch (primaryError) {
-    recordDiagnostic('profile_direct_failed', { error: primaryError.name, message: String(primaryError.message).slice(0, 120), ms: Date.now() - started });
-    let response;
-    const bridgeStarted = Date.now();
-    const bridgeController = new AbortController();
-    const bridgeTimeout = setTimeout(() => bridgeController.abort(), 12000);
-    try {
-      response = await fetch(`${profileBridge}?name=${encodeURIComponent(nick)}`, { signal: bridgeController.signal });
-    } catch (bridgeError) {
-      recordDiagnostic('profile_bridge_failed', { error: bridgeError.name, message: String(bridgeError.message).slice(0, 120), ms: Date.now() - bridgeStarted });
-      try {
-        return { profile: await fetchCachedProfile(nick), fallback: true };
-      } catch (cacheError) {
-        recordDiagnostic('profile_cache_failed', { message: String(cacheError.message).slice(0, 120) });
-        throw new Error(`Не удалось получить профиль ни из игры, ни через резервный сервер (${bridgeError.message}); ${cacheError.message}.`);
-      }
-    } finally {
-      clearTimeout(bridgeTimeout);
-    }
-    if (!response.ok) {
-      recordDiagnostic('profile_bridge_http', { status: response.status, ms: Date.now() - bridgeStarted });
-      const detail = await response.json().catch(() => ({}));
-      try {
-        return { profile: await fetchCachedProfile(nick), fallback: true };
-      } catch (cacheError) {
-        recordDiagnostic('profile_cache_failed', { message: String(cacheError.message).slice(0, 120) });
-        throw new Error(`Не удалось загрузить персонажа через запасной источник: ${detail.error || response.status}; ${cacheError.message}.`);
-      }
-    }
-    try {
-      const profile = parseOfficialProfile(await response.text());
-      recordDiagnostic('profile_bridge_ok', { status: response.status, ms: Date.now() - bridgeStarted });
-      return { profile, fallback: true };
-    } catch (error) {
-      recordDiagnostic('profile_bridge_invalid', { message: String(error.message).slice(0, 120) });
-      return { profile: await fetchCachedProfile(nick), fallback: true };
-    }
-  } finally {
-    clearTimeout(timeout);
-  }
+export async function fetchCharacterProfile(name, options = {}) {
+  const nick = String(name).trim().normalize('NFC');
+  const html = await requestData(`${apiBase}/api/profile-html?name=${encodeURIComponent(nick)}`, {
+    ...options, format:'text', source:'profile-server', timeoutMs:options.timeoutMs || 15000,
+  });
+  const profile = parseOfficialProfile(html);
+  recordDiagnostic('profile_parsed', {source:'official-html', nick});
+  return {profile, fallback:false};
 }

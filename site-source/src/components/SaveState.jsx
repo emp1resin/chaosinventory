@@ -73,7 +73,7 @@ function SaveState({ snapshot, dispatch }) {
           <Typography variant="h5">Мои билды</Typography>
           <Typography variant="body2">Хранятся только в этом браузере.</Typography>
           <div className="save-form">
-            <TextField label="Название билда" value={name} onChange={(event) => setName(event.target.value)} />
+            <TextField id="saved-build-name" label="Название билда" value={name} onChange={(event) => setName(event.target.value)} />
             <Button variant="contained" color="primary" onClick={save}>Сохранить текущий</Button>
           </div>
           <Divider />

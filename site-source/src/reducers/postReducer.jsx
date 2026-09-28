@@ -16,6 +16,7 @@ var initialState = {
 	clansArtMask: 0,
 	clanPosition: 100,
 	clanGlory: 0,
+	importMeta: null,
 	golem: { ...emptyGolem },
 	elixirs: [],
 	religion: 'Нет',
@@ -374,6 +375,7 @@ const postReducer = (state = initialState, action) => {
 		clanGlory: clanGlory(state.clanGlory, action),
 		golem: golem(state.golem, action),
 		elixirs: elixirsReducer(state.elixirs, action),
+		importMeta: action.type === 'Загрузка персонажа' ? action.importMeta ?? null : action.type === 'Загрузить все данные игрока' ? action.data.importMeta ?? null : state.importMeta,
 		religionData: religionData(state.religionData, action),
 		religion: religion(state.religion, action),
 		profession: profession(state.profession, action),
@@ -966,6 +968,9 @@ function clansArtMask(state = [], action) {
 }
 
 function religionData(state = [], action) {
+	if (action.type === 'Загрузка персонажа') return action.religionData || [];
+	if (action.type === 'Смена Религии') return [];
+	if (action.type === 'Загрузить все данные игрока') return action.data.religionData || [];
 
 	if (action.type === 'Получили бонусы религий') {
 		return action.data;
@@ -1086,7 +1091,7 @@ function clanPosition(state = [], action) {
 
 	//	console.log(action.positionOnClan)
 	if (action.type === 'Смена Позиции в Клане') {
-		return action.data;
+		return action.data === '' || !Number.isInteger(Number(action.data)) || Number(action.data) < 1 ? null : Number(action.data);
 	} else if (action.type === 'Загрузка персонажа') {
 		return action.positionOnClan
 	} else if (action.type === 'Загрузить все данные игрока') {

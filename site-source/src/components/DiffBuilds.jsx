@@ -40,6 +40,8 @@ function resultProps(data) {
     runesChange: data.runesChange,
     charBless: data.charBless,
     lifeBless: data.lifeBless,
+    elixirs: data.elixirs,
+    golem: data.golem,
   };
 }
 

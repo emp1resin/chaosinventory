@@ -29,79 +29,30 @@ import SwipeableDrawer from '@material-ui/core/SwipeableDrawer';
 
 import Results from './Results';
 import allItems from './ItemsAll';
-import { resolveEquippedItems } from '../data/resolveEquipment';
-import { fetchGameJson, fetchOptionalGameJson } from '../data/gameApi';
-import { fetchCharacterProfile, fetchOfficialClanGlory } from '../data/officialProfile';
+import { importCharacter } from '../data/characterImport';
+import { requestData } from '../data/apiTransport';
+import { apiBase } from '../data/apiConfig';
 import { beginImport, recordDiagnostic } from '../data/diagnostics';
 import BugReportButton from './BugReportButton';
 
 
 var nickArr = []
-const breachRuneApiCache = new Map()
-
-async function normalizeBreachRune(item) {
-	if (!item) return item
-	const rawCode = String(item.breachRune || '0')
-	if (rawCode === '0' || rawCode === '') {
-		item.breachRune = ''
-		item.breachRuneImported = false
-		return item
-	}
-
-	if (!/^\d+$/.test(rawCode)) {
-		item.breachRune = rawCode.toLowerCase()
-		item.breachRuneImported = true
-		return item
-	}
-
-	try {
-		if (!breachRuneApiCache.has(rawCode)) {
-			breachRuneApiCache.set(rawCode,
-				fetchGameJson(`https://chaosage.ru/sAPI2.php?id=${rawCode}&request=equipment_info`)
-			)
-		}
-		const runeInfo = await breachRuneApiCache.get(rawCode)
-		const slug = runeInfo.image?.match(/br_([a-z]+)\.png/i)?.[1]
-			|| runeInfo.name?.replace(/^Руна\s+/i, '').trim().toLowerCase()
-		item.breachRuneApiId = rawCode
-		item.breachRune = slug || `api-${rawCode}`
-		item.breachRuneName = runeInfo.name || `Руна Разлома #${rawCode}`
-		item.breachRuneDescription = runeInfo.desc || ''
-		item.breachRuneImage = runeInfo.image ? `https://chaosage.ru/images/${runeInfo.image}` : ''
-		item.breachRuneImported = true
-	} catch (error) {
-		console.warn('Не удалось определить руну Разлома', rawCode, error)
-		item.breachRuneApiId = rawCode
-		item.breachRune = `api-${rawCode}`
-		item.breachRuneName = `Неизвестная руна Разлома #${rawCode}`
-		item.breachRuneImported = true
-	}
-	return item
+// Suggestions do not depend on the original developer's service.
+// The control also accepts any nickname not present in local suggestions.
+const suggestions = nickArr;
+async function loadSuggestions(signal) {
+  const html = await requestData(`${apiBase}/api/avatar-rating-html`, {signal,format:'text',source:'rating',timeoutMs:10000});
+  const doc = new DOMParser().parseFromString(html,'text/html');
+  // Rating rows link the nickname via showInfo.php; names are suggestions only.
+  for (const link of doc.querySelectorAll('a[href]')) {
+    try {
+      const url = new URL(link.getAttribute('href'),'https://chaosage.ru');
+      const name = url.pathname.endsWith('/showInfo.php') && url.searchParams.get('avatar');
+      if (name && !nickArr.some(item=>item.label===name)) nickArr.push({label:name});
+    } catch {}
+  }
 }
 
-
-fetch('https://chaosage.app/resources/nickParse.php')
-	.then(response => response.json())
-	.then((jsonData) => {
-
-
-		var nick = JSON.parse(jsonData.out);
-
-
-		for (var i = 0; i < nick.length; i++) {
-			nickArr.push({
-				label: nick[i].name
-			})
-		}
-		//			console.log(nickArr)
-	})
-	.catch((error) => {
-		// handle your errors here
-		console.log(error)
-	})
-
-
-const suggestions = nickArr;
 
 function renderInputComponent(inputProps) {
 	const {
@@ -337,146 +288,31 @@ class InputNameForFinding extends React.Component {
 	}
 
 
-	giveDataByName(x) {
-		if (!x || !x.trim()) {
-			this.setState({error: 'Введите ник персонажа.'});
-			return;
-		}
-		beginImport(x);
-
-		this.setState({
-			loading: true,
-			error: '',
-			reportRevision: this.state.reportRevision + 1,
-
-		});
-
-
-		// Загружаем список вещей и некоторые параметры игрока своим парсером
-		fetchCharacterProfile(x).catch(error => { throw new Error(`Профиль персонажа: ${error.message}`) })
-			.then(({profile: jsonData, fallback}) => {
-				recordDiagnostic('profile_parsed', { fallback });
-				if (!jsonData.out) throw new Error('Персонаж не найден.');
-
-				var urls = [
-					  "https://chaosage.space/religionAndClansData",
-					  `https://chaosage.ru/sAPI2.php?user_name=${encodeURIComponent(x.trim())}&request=user_fraction`,
-					  `https://chaosage.ru/sAPI2.php?user_name=${encodeURIComponent(x.trim())}&request=clan_list_by_user_name`,
-					  `https://chaosage.ru/sAPI2.php?user_name=${encodeURIComponent(x.trim())}&request=user_equipment_list`,
-					]
-				return Promise.all([
-					fallback ? fetchOfficialClanGlory().then(clansArr => ({clansArr})).catch(() => null)
-						: fetchOptionalGameJson(urls[0]),
-					fetchOptionalGameJson(urls[1]),
-					fetchOptionalGameJson(urls[2]),
-					fetchGameJson(urls[3]).catch(error => { throw new Error(`Список экипировки: ${error.message}`) }),
-				])
-					.then(result => {
-						recordDiagnostic('equipment_list_received', { slots: Object.values(result[3] || {}).filter(Boolean).length });
-						if (!result[3] || typeof result[3] !== 'object') {
-							throw new Error('Игра не вернула список надетых вещей.')
-						}
-						var p_c = result[2] || {}
-						var secondJsonData = {
-							clansData: result[0] || {clansArr: {}},
-							fractionData: result[1] || {},
-							positionOnClan: Object.values(p_c),
-							listOfThings: result[3],
-						}
-						//						console.log(secondJsonData)
-						//						console.log(secondJsonData)
-
-
-						let position = null;
-						if (secondJsonData.positionOnClan) {
-							for (var i = 0; i < secondJsonData.positionOnClan.length; i++) {
-								//								console.log(secondJsonData.positionOnClan[i])
-								if (x.trim().toLocaleLowerCase() === String(secondJsonData.positionOnClan[i][1]).toLocaleLowerCase()) {
-									position = i + 1
-									break
-								}
-							}
-						}
-
-						// перебираем модификаторы
-						//						console.log(secondJsonData.listOfThings)
-						if (secondJsonData.listOfThings) {
-							for (var j = 0; j < secondJsonData.listOfThings.length; j++) {
-								console.log(secondJsonData.listOfThings[j])
-							}
-						}
-
-
-						if (jsonData.out.clan === 'нет') {
-							jsonData.out.clan = 'Нет'
-						}
-						if (jsonData.out.clan === 'Нет') position = 100;
-						const rawGlory = secondJsonData.clansData.clansArr?.[jsonData.out.clan];
-						const glory = jsonData.out.clan === 'Нет' ? 0 :
-							(rawGlory == null || rawGlory === '' || !Number.isFinite(Number(rawGlory)) ? null : Number(rawGlory));
-
-
-						var urls2 = [
-					  `https://chaosage.ru/sAPI2.php?id=${secondJsonData.listOfThings.arms}&request=equipment_info`,
-					  `https://chaosage.ru/sAPI2.php?id=${secondJsonData.listOfThings.gloves}&request=equipment_info`,
-					  `https://chaosage.ru/sAPI2.php?id=${secondJsonData.listOfThings.weapon}&request=equipment_info`,
-					  `https://chaosage.ru/sAPI2.php?id=${secondJsonData.listOfThings.belt}&request=equipment_info`,
-					  `https://chaosage.ru/sAPI2.php?id=${secondJsonData.listOfThings.boots}&request=equipment_info`,
-					  `https://chaosage.ru/sAPI2.php?id=${secondJsonData.listOfThings.helm}&request=equipment_info`,
-					  `https://chaosage.ru/sAPI2.php?id=${secondJsonData.listOfThings.amulet}&request=equipment_info`,
-					  `https://chaosage.ru/sAPI2.php?id=${secondJsonData.listOfThings.shield}&request=equipment_info`,
-					  `https://chaosage.ru/sAPI2.php?id=${secondJsonData.listOfThings.ring1}&request=equipment_info`,
-					  `https://chaosage.ru/sAPI2.php?id=${secondJsonData.listOfThings.ring2}&request=equipment_info`,
-					  `https://chaosage.ru/sAPI2.php?id=${secondJsonData.listOfThings.armor}&request=equipment_info`,
-					]
-						const slots = ['наручи', 'перчатки', 'оружие', 'пояс', 'ботинки', 'шлем', 'амулет', 'вторая рука', 'левое кольцо', 'правое кольцо', 'доспех'];
-						return Promise.all(urls2.map((url, index) => {
-							const id = new URL(url).searchParams.get('id');
-							if (!id || id === 'undefined' || id === 'null' || id === '0') return null;
-							return fetchGameJson(url).catch(error => {
-								throw new Error(`Вещь в слоте «${slots[index]}» (#${id}): ${error.message}`);
-							});
-						}))
-							.then(items => Promise.all(items.map(normalizeBreachRune)))
-							.then(result => {
-
-								// Resolve every equipped slot by its FAQ ID. The profile name is
-								// display text and can refer to several different items.
-								const { resolved, missing } = resolveEquippedItems(jsonData.out.things, result, allItems)
-								if (missing.length) {
-									recordDiagnostic('catalog_missing', { count: missing.length, item: missing[0].name });
-									throw new Error(`Нет базовых вещей в каталоге: ${missing.map(item => `${item.name} (#${item.originalId})`).join(', ')}`)
-								}
-								jsonData.out.things = resolved
-								recordDiagnostic('import_complete', { slots: result.filter(Boolean).length });
-								this.setState({
-									loading: false,
-									loadedName: x.trim()
-								});
-
-
-								this.props.dispatch({
-									type: `Загрузка персонажа`,
-									data: jsonData,
-									dataGlory: glory,
-									fractionData: secondJsonData.fractionData.fractionRLevel * 1 || 0,
-									positionOnClan: position,
-									modifireInformation: result
-								});
-							})
-
-
-
-					});
-
-
-			})
-			.catch((error) => {
-				recordDiagnostic('import_failed', { message: String(error.message).slice(0, 240) });
-				console.error(error)
-				this.setState({loading: false, error: error.message || 'Не удалось загрузить персонажа.'})
-			})
-	};
+	async giveDataByName(x) {
+    const nick = String(x || '').trim();
+    if (!nick) { this.setState({error:'Введите ник персонажа.'}); return; }
+    this.importController?.abort();
+    const controller = new AbortController();
+    this.importController = controller;
+    beginImport(nick);
+    this.setState(state => ({loading:true, error:'', importWarning:'', reportRevision:state.reportRevision+1}));
+    try {
+      const action = await importCharacter(nick, allItems, {signal:controller.signal});
+      if (this.importController !== controller || controller.signal.aborted) return;
+      this.props.dispatch(action);
+      if (!nickArr.some(item=>item.label.toLocaleLowerCase()===nick.toLocaleLowerCase())) nickArr.push({label:nick});
+      recordDiagnostic('import_complete', {slots:action.importMeta.equipped, warnings:action.importMeta.warnings.length});
+      this.setState({loading:false, loadedName:nick,
+        importWarning:action.importMeta.warnings.length ? `Не подтверждены данные: ${action.importMeta.warnings.join(', ')}. Расчёт может быть неполным.` : ''});
+    } catch (error) {
+      if (this.importController !== controller || controller.signal.aborted) return;
+      controller.abort();
+      recordDiagnostic('import_failed', {code:error.code || 'UNKNOWN', message:String(error.message).slice(0,240)});
+      this.setState({loading:false,error:error.message || 'Не удалось загрузить персонажа.'});
+    }
+  }
+  componentDidMount() { this.suggestionsController=new AbortController();loadSuggestions(this.suggestionsController.signal).catch(()=>{}); }
+  componentWillUnmount() { this.importController?.abort();this.suggestionsController?.abort(); }
 	updateData = (value) => {
 		this.setState({
 			name: value
@@ -606,11 +442,12 @@ class InputNameForFinding extends React.Component {
 
 			</div>
 			<Typography variant="caption" component="p" className="toolbar-hint">
-				После загрузки укажите навыки, клановые артефакты, благословения и активные эликсиры вручную.
+				После загрузки укажите навыки, клановые артефакты, благословения, голема и активные эликсиры вручную.
 			</Typography>
 			<div className = 'col-12 toolbar-status' > {
 				this.state.loading && < LinearProgress / >
 			}
+			{this.state.importWarning && <Typography role="status" style={{marginTop:8}}>{this.state.importWarning}</Typography>}
 			{this.state.error && <Typography color="error" style={{marginTop: 8}}>{this.state.error}</Typography>}
 			<BugReportButton nick={this.state.name} lastError={this.state.error}
 				build={this.state.error ? null : this.props.reportState} loadedNick={this.state.loadedName}

@@ -6,8 +6,6 @@ on:
     paths:
       - 'site-source/**'
       - '.github/workflows/build-pages.yml'
-  schedule:
-    - cron: '17 3 * * *'
   workflow_dispatch:
 
 permissions:
@@ -26,16 +24,13 @@ jobs:
       - name: Install dependencies
         run: npm ci --legacy-peer-deps
         working-directory: site-source
-      - name: Refresh public character profiles
-        run: node scripts/update-profile-cache.mjs
-        working-directory: site-source
       - name: Build for Pages
         run: npm run build -- --base /chaosinventory/
         working-directory: site-source
       - name: Update published files
         run: |
           cp -a site-source/dist/. ./
-          git add -A index.html assets favicon.svg icons.svg profile-cache.json site-source/public/profile-cache.json
+          git add -A index.html assets favicon.svg icons.svg
           if git diff --cached --quiet; then exit 0; fi
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'

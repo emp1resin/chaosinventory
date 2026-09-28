@@ -23,3 +23,6 @@ agent-tools/
 *.njsproj
 *.sln
 *.sw?
+
+official-import-observations/
+official-api-observations/

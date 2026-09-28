@@ -10,8 +10,8 @@ import MenuItem from '@material-ui/core/MenuItem';
 import FormHelperText from '@material-ui/core/FormHelperText';
 import FormControl from '@material-ui/core/FormControl';
 import Select from '@material-ui/core/Select';
-import { hasReligionBonuses, sanitizeReligionData } from '../data/religions';
-import { emptyGolem, golemSupportPercent } from '../data/golem';
+import { hasReligionBonuses } from '../data/religions';
+import { emptyGolem, golemSupportDetails } from '../data/golem';
 import { fetchOfficialClanGlory } from '../data/officialProfile';
 
 
@@ -45,7 +45,7 @@ class CharInput extends React.Component {
 	constructor(props) {
 		super(props);
 		this.state = {
-			religionsList: ['Нет'],
+			religionsList: ['Нет', 'Магистика', 'Иллириана', 'Багровый Закат', 'Небесная Кара', 'Элементалистика', 'Насфер', 'Джа', 'Мистицизм'],
 			clansList: ['Нет'],
 			clans: {},
 			drawerClanArtsOpen: false
@@ -53,54 +53,12 @@ class CharInput extends React.Component {
 	}
 	
 	componentDidMount() {
-		var religionData = [];
-		var religionsList = ['Нет'];
-		var clansList = ['Нет'];
-		
-		fetch('https://chaosage.space/religionAndClansData')
-			.then(response => {
-				if (!response.ok) throw new Error(`Кланы: ${response.status}`);
-				return response.json();
-			})
-			.catch(() => fetchOfficialClanGlory().then(clansArr => ({ clansArr })))
-			.then((jsonData) => {
-				religionsList = [...new Set([...(jsonData.religionArr || []), 'Нет'])]
-
-				const serialized = jsonData.rowA?.[0]?.religionInformation
-				if (serialized) {
-					const serializedReligionData = serialized
-						.replace(new RegExp("<br />", 'g'), "")
-						.replace(/'/g, '"');
-					religionData = sanitizeReligionData(JSON.parse(serializedReligionData));
-				}
-
-//				console.log(jsonData.clansArr)
-				
-				for (var i in jsonData.clansArr) {
-					clansList.push(i)
-				}
-			
-				this.setState({
-					religionsList: religionsList,
-					clansList: clansList,
-					clans: jsonData.clansArr
-				})
-				
-				this.props.dispatch({
-					type: `Получили бонусы религий`,
-					data: religionData
-					
-				});
-//				console.log(religionData)
-			})
-			.catch((error) => {
-				console.log(error)
-				this.props.dispatch({
-					type: `Получили бонусы религий`,
-					data: []
-				});
-			})
-	}
+    this.catalogController = new AbortController();
+    fetchOfficialClanGlory({signal:this.catalogController.signal})
+      .then(clans => { if (!this.catalogController.signal.aborted) this.setState({clans,clansList:['Нет',...Object.keys(clans)]}); })
+      .catch(() => {});
+  }
+  componentWillUnmount() { this.catalogController?.abort(); }
 	changeReligion(e) {
 
 		this.props.dispatch({
@@ -192,7 +150,7 @@ class CharInput extends React.Component {
 
 	}
 	changeGolem(field, value) {
-		this.props.dispatch({type: 'Смена голема', data: {[field]: value}});
+		this.props.dispatch({type: 'Смена голема', data: {[field]: value, ...(field === 'supportManual' ? {} : {supportManual: ''})}});
 	}
 	render() {
 		
@@ -269,7 +227,8 @@ class CharInput extends React.Component {
 		var professionEnable = this.props.profession !== 'Нет';
 		var clanEnable = this.props.clan !== 'Нет';
 		const golem = this.props.golem || emptyGolem;
-		const supportBonus = golemSupportPercent(golem);
+		const supportInfo = golemSupportDetails(golem);
+		const supportBonus = supportInfo.percent;
 		
 //		console.log(this.state.clansList)
 
@@ -558,12 +517,12 @@ class CharInput extends React.Component {
 					</div>
 				</div>
 				<details className="golem-config">
-					<summary>Спутник-голем: {golem.type === 'Нет' ? 'не выбран' : `${golem.type} · ${golem.mode}`}{supportBonus > 0 ? ` · +${supportBonus}%` : ''}</summary>
+					<summary>Спутник-голем: {golem.type === 'Нет' ? 'не выбран' : `${golem.type} · ${golem.mode}`}{supportBonus > 0 ? ` · +${supportBonus}%${supportInfo.source === 'estimate' ? ' (оценка)' : ''}` : ''}</summary>
 					<p>Параметры голема укажите вручную: профиль персонажа пока не передаёт их в примерочную.</p>
 					<div className="golem-controls-grid">
 						<FormControl fullWidth>
 							<InputLabel>Тип голема</InputLabel>
-							<Select value={golem.type} onChange={(e) => this.props.dispatch({type: 'Смена голема', data: {type: e.target.value, mode: e.target.value === 'Нет' ? 'Нет' : golem.mode}})}>
+							<Select value={golem.type} onChange={(e) => this.props.dispatch({type: 'Смена голема', data: {type: e.target.value, mode: e.target.value === 'Нет' ? 'Нет' : 'Поддержка', supportManual: ''}})}>
 								{['Нет', 'Бронзовый', 'Железный', 'Золотой', 'Мифрильный'].map(type => <MenuItem key={type} value={type}>{type}</MenuItem>)}
 							</Select>
 						</FormControl>
@@ -571,15 +530,16 @@ class CharInput extends React.Component {
 							<FormControl fullWidth>
 								<InputLabel>Режим</InputLabel>
 								<Select value={golem.mode} onChange={(e) => this.changeGolem('mode', e.target.value)}>
-									{['Нет', 'Сражение', 'Добыча', 'Поддержка', 'Ремонт'].map(mode => <MenuItem key={mode} value={mode}>{mode}</MenuItem>)}
+									{['Нет', 'Поддержка', ...(!['Нет', 'Поддержка'].includes(golem.mode) ? [golem.mode] : [])].map(mode => <MenuItem key={mode} value={mode}>{mode}</MenuItem>)}
 								</Select>
 							</FormControl>
 							<TextField label="Уровень голема" type="number" value={golem.level} inputProps={{min: 1, max: 100}} onChange={(e) => this.changeGolem('level', e.target.value)} />
 							<TextField label="Энергия" type="number" value={golem.energy} inputProps={{min: 0}} onChange={(e) => this.changeGolem('energy', e.target.value)} />
 							<TextField label="Овердрайв" type="number" value={golem.overdrive} inputProps={{min: 0}} onChange={(e) => this.changeGolem('overdrive', e.target.value)} />
+							{golem.mode === 'Поддержка' && <TextField label="Бонус из игры, % (если известен)" type="number" value={golem.supportManual ?? ''} inputProps={{min: 0, max: 100, step: 0.1}} onChange={(e) => this.changeGolem('supportManual', e.target.value)} />}
 						</>}
 					</div>
-					<p className="golem-formula">Предварительный расчёт поддержки: 5% от базовых параметров; золотой голем усиливает этот бонус на 10% — до 5,5% при уровне 1, энергии 1–9 и нулевом овердрайве. Рост уровня, энергии и овердрайва сложен от базовых 5%. При нуле энергии бонус отсутствует.</p>
+					<p className="golem-formula">Поддержка работает и при нулевой энергии. Для золотого голема по контрольной таблице: ур. 1 / 0 / 0 → +5%; ур. 1 / 100 / 100 → +8%; ур. 100 / 100 / 100 → +13,5% (уровень / энергия / овердрайв). Для остальных сочетаний показана оценка по FAQ; известный из игры бонус можно указать вручную.</p>
 				</details>
 
 			</div>
