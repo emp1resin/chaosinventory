@@ -7,11 +7,12 @@ const {chromium}=await import(pathToFileURL(process.env.PLAYWRIGHT_MODULE || '/o
 const root=fileURLToPath(new URL('..',import.meta.url));
 const observations=path.join(root,'official-import-observations');
 const summary=JSON.parse(await fs.readFile(path.join(observations,'summary.json'),'utf8'));
-const server=await preview({root,preview:{host:'127.0.0.1',port:4177,strictPort:true}});
+const server=await preview({root,base:'/chaosinventory/',preview:{host:'127.0.0.1',port:4177,strictPort:true}});
 const browser=await chromium.launch({headless:true});
 const page=await browser.newPage({viewport:{width:1440,height:1050}});
-const errors=[],badRequests=[],reports=[];let directFailure=false,failedItem=false,delayedProfile='';
+const errors=[],badRequests=[],reports=[],consoleErrors=[];let directFailure=false,failedItem=false,delayedProfile='';
 page.on('pageerror',e=>errors.push(e.message));
+page.on('console',message=>{if(message.type()==='error')consoleErrors.push(message.text().slice(0,500));});
 const url='http://127.0.0.1:4177/chaosinventory/';
 await page.route('**/*',async route=>{
  const request=route.request(),u=new URL(request.url());
@@ -102,4 +103,9 @@ try{
  await page.screenshot({path:path.join(observations,'browser.png'),fullPage:true});
  await fs.writeFile(path.join(observations,'browser-summary.json'),JSON.stringify({imports:8,comparison:true,directFailureFallback:true,itemFailureReport:true,oldImportCancelled:true,errors,badRequests},null,2));
  console.log('UI_FAILURES_OK fallback, failed item report, cancelled old import');
+}catch(error){
+ console.log('UI_FAILURE_DETAIL '+JSON.stringify({message:error.message,errors,badRequests,consoleErrors}));
+ await fs.writeFile(path.join(observations,'browser-failed.html'),await page.content());
+ await page.screenshot({path:path.join(observations,'browser-failed.png'),fullPage:true});
+ throw error;
 }finally{await browser.close();await new Promise(resolve=>server.httpServer.close(resolve));}
