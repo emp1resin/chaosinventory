@@ -31,7 +31,7 @@ import Results from './Results';
 import allItems from './ItemsAll';
 import { resolveEquippedItems } from '../data/resolveEquipment';
 import { fetchGameJson, fetchOptionalGameJson } from '../data/gameApi';
-import { fetchCharacterProfile } from '../data/officialProfile';
+import { fetchCharacterProfile, fetchOfficialClanGlory } from '../data/officialProfile';
 
 
 var nickArr = []
@@ -362,7 +362,8 @@ class InputNameForFinding extends React.Component {
 					  `https://chaosage.ru/sAPI2.php?user_name=${encodeURIComponent(x.trim())}&request=user_equipment_list`,
 					]
 				return Promise.all([
-					fallback ? Promise.resolve(null) : fetchOptionalGameJson(urls[0]),
+					fallback ? fetchOfficialClanGlory().then(clansArr => ({clansArr})).catch(() => null)
+						: fetchOptionalGameJson(urls[0]),
 					fetchOptionalGameJson(urls[1]),
 					fetchOptionalGameJson(urls[2]),
 					fetchGameJson(urls[3]),

@@ -1,4 +1,27 @@
 const profileBridge = 'https://chaosinventory-data.emp1res1n.chatgpt.site/api/profile-html';
+const clanRatingBridge = 'https://chaosinventory-data.emp1res1n.chatgpt.site/api/clan-rating-html';
+
+// The official clan rating publishes the current glory in the sixth column.
+// Only listed clans can be resolved; leave other clans for manual entry.
+export function parseOfficialClanRating(html) {
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  const clans = {};
+  for (const table of doc.querySelectorAll('table[width="680"]')) {
+    const cells = table.querySelectorAll('td');
+    if (cells.length !== 7) continue;
+    const name = cells[1].textContent.trim().replace(/\s+/g, ' ');
+    const glory = Number(cells[5].textContent.trim());
+    if (name && Number.isFinite(glory)) clans[name] = glory;
+  }
+  if (!Object.keys(clans).length) throw new Error('Рейтинг кланов не содержит славу.');
+  return clans;
+}
+
+export async function fetchOfficialClanGlory() {
+  const response = await fetch(clanRatingBridge);
+  if (!response.ok) throw new Error(`Рейтинг кланов: ${response.status}`);
+  return parseOfficialClanRating(await response.text());
+}
 
 const emptyThings = {
   'Шлем': 'Шлем', 'Амулет': 'Амулет', 'Наручи': 'Наручи',

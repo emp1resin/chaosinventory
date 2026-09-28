@@ -12,6 +12,7 @@ import FormControl from '@material-ui/core/FormControl';
 import Select from '@material-ui/core/Select';
 import { hasReligionBonuses, sanitizeReligionData } from '../data/religions';
 import { emptyGolem, golemSupportPercent } from '../data/golem';
+import { fetchOfficialClanGlory } from '../data/officialProfile';
 
 
 import { Tooltip as ReactTooltip } from 'react-tooltip';
@@ -57,7 +58,11 @@ class CharInput extends React.Component {
 		var clansList = ['Нет'];
 		
 		fetch('https://chaosage.space/religionAndClansData')
-			.then(response => response.json())
+			.then(response => {
+				if (!response.ok) throw new Error(`Кланы: ${response.status}`);
+				return response.json();
+			})
+			.catch(() => fetchOfficialClanGlory().then(clansArr => ({ clansArr })))
 			.then((jsonData) => {
 				religionsList = [...new Set([...(jsonData.religionArr || []), 'Нет'])]
 

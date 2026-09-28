@@ -1236,8 +1236,16 @@ export class Result extends React.Component {
 		} else {
 			accuracySkills = [50, 4]
 		}
-		atack += accuracySkills[0] * this.props.allSkills.accuracySkills
-		atack = Math.round(atack * (1 + accuracySkills[1] * this.props.allSkills.accuracySkills / 100))
+		if (this.props.allSkillsMaster.accuracySkills === 0 && this.props.allSkills.accuracySkills > 0) {
+			// Controlled in-game measurements at levels 1 and 2 show that the
+			// novice bonus is applied and rounded separately for each level.
+			for (let level = 0; level < this.props.allSkills.accuracySkills; level++) {
+				atack = Math.ceil((atack + accuracySkills[0]) * (1 + accuracySkills[1] / 100))
+			}
+		} else {
+			atack += accuracySkills[0] * this.props.allSkills.accuracySkills
+			atack = Math.round(atack * (1 + accuracySkills[1] * this.props.allSkills.accuracySkills / 100))
+		}
 		
 		// Навык Каменная кожа (броня)
 		var stoneskinSkills = [5, 2]
