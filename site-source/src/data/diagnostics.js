@@ -1,4 +1,4 @@
-const bridge = 'https://chaosinventory-data.emp1res1n.chatgpt.site';
+import { apiBase as bridge, buildVersion } from './apiConfig.js';
 const queueKey = 'chaosinventory:pending-reports:v1';
 const events = [];
 
@@ -7,7 +7,9 @@ export function recordDiagnostic(stage, detail = {}) {
   const safe = Object.fromEntries(Object.entries(detail).filter(([, value]) =>
     typeof value === 'number' || typeof value === 'boolean' ||
     (typeof value === 'string' && value.length <= 250)));
-  events.push({ at: new Date().toISOString(), stage, ...safe });
+  const event = {at:new Date().toISOString(),stage:String(stage).slice(0,60),...safe};
+  for (const key of Object.keys(safe).reverse()) { if (JSON.stringify(event).length <= 600) break; delete event[key]; }
+  events.push(event);
   if (events.length > 35) events.shift();
 }
 
@@ -39,7 +41,7 @@ export async function probeBridge() {
 
 export function snapshotBuild(state) {
   if (!state) return null;
-  const numberKeys = ['levelChange', 'powerChange', 'bodyChange', 'dexChange', 'intellChange', 'staminaChange', 'willChange', 'clanGlory',
+  const numberKeys = ['levelChange', 'powerChange', 'bodyChange', 'dexChange', 'intellChange', 'staminaChange', 'willChange', 'clanGlory', 'clanPosition', 'fractionReputation',
     'clansArtSword', 'clansArtSphere', 'clansArtRune', 'clansArtMask'];
   const values = Object.fromEntries(numberKeys.map(key => [key, state[key]]));
   const skills = Object.fromEntries(Object.entries(state.allSkills || {}).filter(([, level]) => Number(level) > 0));
@@ -61,6 +63,7 @@ export function snapshotBuild(state) {
 export function createBugReport({ nick, category, lastError, build, loadedNick }) {
   return {
     schema: 1,
+    version: buildVersion,
     clientId: crypto.randomUUID(),
     createdAt: new Date().toISOString(),
     category,
@@ -79,22 +82,54 @@ export function createBugReport({ nick, category, lastError, build, loadedNick }
   };
 }
 
+export function compactBugReport(report) {
+  const copy = JSON.parse(JSON.stringify(report));
+  copy.events = (Array.isArray(copy.events)?copy.events:[]).slice(-35).map(event => {
+    if (JSON.stringify(event).length <= 600) return event;
+    return {at:event.at,stage:event.stage,code:event.code,status:event.status,message:String(event.message || '').slice(0,150),truncated:true};
+  });
+  if (copy.build && JSON.stringify(copy.build).length > 12000) {
+    copy.build = {...copy.build, slots:copy.build.slots?.map(({bonuses,...item})=>item), truncated:true};
+  }
+  const size = () => new TextEncoder().encode(JSON.stringify(copy)).length;
+  while (size() > 22500 && copy.events.length > 1) {
+    const ok = copy.events.findIndex(e=>e.stage?.endsWith('_ok'));
+    copy.events.splice(ok < 0 ? 0 : ok,1);
+    copy.truncated = true;
+  }
+  if (size() > 22500 && copy.build?.slots) {
+    copy.build.slots = copy.build.slots.map(({bonuses,...slot})=>slot);
+    copy.build.truncated = true;
+  }
+  if (copy.browser && JSON.stringify(copy.browser).length > 800) copy.browser = {userAgent:String(copy.browser.userAgent || '').slice(0,300),online:copy.browser.online};
+  if (size() > 22500) { copy.build = null; copy.truncated = true; }
+  return copy;
+}
+export function isRetryableReportError(error) { return error.retryable !== false; }
 export async function sendBugReport(report) {
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 8000);
+  let timer;
+  const timeout = new Promise((_, reject) => {
+    timer = setTimeout(()=>{controller.abort();reject(new Error('Время ожидания отправки истекло'));},12000);
+  });
   try {
-    const response = await fetch(`${bridge}/api/bug-report`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(report),
-      signal: controller.signal,
-    });
-    const result = await response.json().catch(() => ({}));
-    if (!response.ok || !result.id) throw new Error(result.error || `HTTP ${response.status}`);
-    return result.id;
-  } finally {
-    clearTimeout(timeout);
-  }
+    return await Promise.race([timeout, (async()=>{
+      const response = await fetch(`${bridge}/api/bug-report`, {
+        method:'POST', credentials:'omit',
+        // JSON encoded as a simple CORS request; no preflight dependency.
+        headers:{'Content-Type':'text/plain;charset=UTF-8'},
+        body:JSON.stringify(compactBugReport(report)), signal:controller.signal,
+      });
+      const result = await response.json().catch(()=>({}));
+      if (!response.ok || result.id !== report.clientId) {
+        const error = new Error(result.error || `HTTP ${response.status}`);
+        error.status = response.status;
+        error.retryable = response.status === 429 || response.status >= 500 || response.ok;
+        throw error;
+      }
+      return result.id;
+    })()]);
+  } finally { clearTimeout(timer); }
 }
 
 function pendingReports() {
@@ -107,7 +142,7 @@ function pendingReports() {
 export function queueBugReport(report) {
   try {
     const queue = pendingReports().filter(item => item.clientId !== report.clientId);
-    queue.push(report);
+    queue.push(compactBugReport(report));
     localStorage.setItem(queueKey, JSON.stringify(queue.slice(-5)));
     return true;
   } catch { return false; }
@@ -125,7 +160,12 @@ export async function flushPendingReports() {
     for (const report of pendingReports()) {
       let id;
       try { id = await sendBugReport(report); }
-      catch { break; }
+      catch (error) {
+        if (isRetryableReportError(error)) break;
+        try { localStorage.setItem(queueKey,JSON.stringify(pendingReports().filter(item=>item.clientId!==report.clientId))); } catch {}
+        window.dispatchEvent(new CustomEvent('chaosinventory:report-rejected',{detail:{id:report.clientId,message:error.message}}));
+        continue;
+      }
       try {
         const remaining = pendingReports().filter(item => item.clientId !== report.clientId);
         localStorage.setItem(queueKey, JSON.stringify(remaining));

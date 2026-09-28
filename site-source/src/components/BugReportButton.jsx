@@ -1,7 +1,7 @@
 import React from 'react';
 import Button from '@material-ui/core/Button';
 import Typography from '@material-ui/core/Typography';
-import { createBugReport, pendingReportIdFor, probeBridge, queueBugReport, sendBugReport } from '../data/diagnostics';
+import { createBugReport, isRetryableReportError, pendingReportIdFor, probeBridge, queueBugReport, sendBugReport } from '../data/diagnostics';
 
 export default function BugReportButton({ nick, lastError, build, loadedNick, resetKey }) {
   const [sending, setSending] = React.useState(false);
@@ -22,8 +22,10 @@ export default function BugReportButton({ nick, lastError, build, loadedNick, re
       setPendingId('');
       setSendError('');
     };
+    const rejected = event => {if (event.detail?.id === pendingId) {setPendingId('');setSendError(`Сервер отклонил отчёт: ${event.detail.message}. Нажмите кнопку ещё раз.`);}};
     window.addEventListener('chaosinventory:report-delivered', delivered);
-    return () => window.removeEventListener('chaosinventory:report-delivered', delivered);
+    window.addEventListener('chaosinventory:report-rejected', rejected);
+    return () => {window.removeEventListener('chaosinventory:report-delivered', delivered);window.removeEventListener('chaosinventory:report-rejected', rejected);};
   }, [pendingId]);
 
   async function submit() {
@@ -38,7 +40,7 @@ export default function BugReportButton({ nick, lastError, build, loadedNick, re
       report = createBugReport({ nick, category, lastError, build, loadedNick });
       setReceipt(await sendBugReport(report));
     } catch (error) {
-      const queued = report && queueBugReport(report);
+      const queued = report && isRetryableReportError(error) && queueBugReport(report);
       if (queued) setPendingId(report.clientId);
       const reason = error.name === 'AbortError' ? 'тайм-аут' : String(error.message || error.name).slice(0, 100);
       setSendError(queued

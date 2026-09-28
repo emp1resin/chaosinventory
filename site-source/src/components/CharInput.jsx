@@ -10,7 +10,7 @@ import MenuItem from '@material-ui/core/MenuItem';
 import FormHelperText from '@material-ui/core/FormHelperText';
 import FormControl from '@material-ui/core/FormControl';
 import Select from '@material-ui/core/Select';
-import { hasReligionBonuses, sanitizeReligionData } from '../data/religions';
+import { hasReligionBonuses } from '../data/religions';
 import { emptyGolem, golemSupportPercent } from '../data/golem';
 import { fetchOfficialClanGlory } from '../data/officialProfile';
 
@@ -45,7 +45,7 @@ class CharInput extends React.Component {
 	constructor(props) {
 		super(props);
 		this.state = {
-			religionsList: ['Нет'],
+			religionsList: ['Нет', 'Магистика', 'Иллириана', 'Багровый Закат', 'Небесная Кара', 'Элементалистика', 'Насфер', 'Джа', 'Мистицизм'],
 			clansList: ['Нет'],
 			clans: {},
 			drawerClanArtsOpen: false
@@ -53,54 +53,12 @@ class CharInput extends React.Component {
 	}
 	
 	componentDidMount() {
-		var religionData = [];
-		var religionsList = ['Нет'];
-		var clansList = ['Нет'];
-		
-		fetch('https://chaosage.space/religionAndClansData')
-			.then(response => {
-				if (!response.ok) throw new Error(`Кланы: ${response.status}`);
-				return response.json();
-			})
-			.catch(() => fetchOfficialClanGlory().then(clansArr => ({ clansArr })))
-			.then((jsonData) => {
-				religionsList = [...new Set([...(jsonData.religionArr || []), 'Нет'])]
-
-				const serialized = jsonData.rowA?.[0]?.religionInformation
-				if (serialized) {
-					const serializedReligionData = serialized
-						.replace(new RegExp("<br />", 'g'), "")
-						.replace(/'/g, '"');
-					religionData = sanitizeReligionData(JSON.parse(serializedReligionData));
-				}
-
-//				console.log(jsonData.clansArr)
-				
-				for (var i in jsonData.clansArr) {
-					clansList.push(i)
-				}
-			
-				this.setState({
-					religionsList: religionsList,
-					clansList: clansList,
-					clans: jsonData.clansArr
-				})
-				
-				this.props.dispatch({
-					type: `Получили бонусы религий`,
-					data: religionData
-					
-				});
-//				console.log(religionData)
-			})
-			.catch((error) => {
-				console.log(error)
-				this.props.dispatch({
-					type: `Получили бонусы религий`,
-					data: []
-				});
-			})
-	}
+    this.catalogController = new AbortController();
+    fetchOfficialClanGlory({signal:this.catalogController.signal})
+      .then(clans => { if (!this.catalogController.signal.aborted) this.setState({clans,clansList:['Нет',...Object.keys(clans)]}); })
+      .catch(() => {});
+  }
+  componentWillUnmount() { this.catalogController?.abort(); }
 	changeReligion(e) {
 
 		this.props.dispatch({

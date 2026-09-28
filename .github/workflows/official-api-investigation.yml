@@ -1,8 +1,9 @@
-name: Official API contracts (no deployment)
+name: Official API import verification (no deployment)
 on:
   pull_request:
     paths:
-      - 'site-source/scripts/probe-official-api.mjs'
+      - 'site-source/**'
+      - 'backend/**'
       - '.github/workflows/official-api-investigation.yml'
 permissions:
   contents: read
@@ -17,12 +18,27 @@ jobs:
           node-version: '22'
       - run: npm ci --legacy-peer-deps
         working-directory: site-source
-      - name: Inspect public official API contracts
-        run: node scripts/probe-official-api.mjs
+      - name: Failure and state-isolation tests
+        working-directory: site-source
+        env:
+          NODE_ENV: production
+        run: |
+          node scripts/test-official-api.mjs
+          node scripts/test-import-reset.mjs
+          node scripts/test-runes.mjs
+          node scripts/test-equipment-resolution.mjs
+          node scripts/test-item-focus.mjs
+      - name: Full import from fresh official data
+        run: node scripts/verify-official-import-live.mjs
+        working-directory: site-source
+        env:
+          NODE_ENV: production
+      - name: Build for GitHub Pages without publishing
+        run: npm run build -- --base /chaosinventory/
         working-directory: site-source
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: official-api-observations
-          path: site-source/official-api-observations
+          name: official-import-observations
+          path: site-source/official-import-observations
           retention-days: 7
