@@ -67,7 +67,7 @@ try{
   console.log('UI_IMPORT_OK '+nick+' slots='+data.importMeta.equipped);
  }
  // Real UI save/compare must include newly added modifiers.
- await page.getByRole('checkbox',{name:/Великий эликсир атаки/}).check();
+ await page.getByRole('checkbox',{name:/Эликсир великого наступления/}).check();
  const withElixir=await save('Thrand with elixir');assert.ok(withElixir.elixirs.includes('greatAttack'));
  await page.getByRole('button',{name:'Результаты',exact:true}).click();
  const resultText=await page.locator('.MuiDrawer-paper:visible').innerText();
@@ -78,8 +78,9 @@ try{
  await selects.nth(0).click();await page.getByRole('option',{name:'Thrandu1l',exact:true}).click();
  await selects.nth(1).click();await page.getByRole('option',{name:'Thrand with elixir',exact:true}).click();
  await page.getByText('Выберите два сохранённых билда.').waitFor({state:'hidden'});
- const comparison=await page.locator('.compare-drawer').innerText();
- assert.ok(comparison.includes(String(attack)),'Comparison must retain elixir attack');
+ const attackRow=page.getByRole('row').filter({has:page.getByRole('rowheader',{name:'Атака',exact:true})});
+ const comparedAttack=Number(await attackRow.getByRole('cell').nth(1).innerText());
+ assert.equal(comparedAttack,attack,'Comparison must retain elixir attack');
  await closeDrawer();
  console.log('UI_COMPARE_OK saves and elixir effect retained');
  // Simulated direct CORS/network failure must use the second JSON path.

@@ -116,6 +116,7 @@ export async function importCharacter(name, catalog, {signal} = {}) {
   const religionStatus = religion.status === 'unavailable' ? 'unavailable' :
     religion.value && typeof religion.value === 'object' && Object.keys(religion.value).length === 0 ? 'empty' : 'unrecognized';
   if (religionStatus === 'unrecognized') warnings.push('Формат бонусов религии');
+  if (religionStatus === 'empty' && !['Нет','Иллириана'].includes(profile.out.religion)) warnings.push('Бонусы религии не подтверждены API');
   return {
     type:'Загрузка персонажа', data:{...profile,out:{...profile.out,things:found.resolved}},
     dataGlory:glory, positionOnClan:position, fractionData:validFraction ? Number(fractionLevel) : 0,

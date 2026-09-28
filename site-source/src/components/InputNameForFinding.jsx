@@ -303,7 +303,7 @@ class InputNameForFinding extends React.Component {
       if (!nickArr.some(item=>item.label.toLocaleLowerCase()===nick.toLocaleLowerCase())) nickArr.push({label:nick});
       recordDiagnostic('import_complete', {slots:action.importMeta.equipped, warnings:action.importMeta.warnings.length});
       this.setState({loading:false, loadedName:nick,
-        importWarning:action.importMeta.warnings.length ? `Не получены данные: ${action.importMeta.warnings.join(', ')}. Проверьте эти поля вручную.` : ''});
+        importWarning:action.importMeta.warnings.length ? `Не подтверждены данные: ${action.importMeta.warnings.join(', ')}. Расчёт может быть неполным.` : ''});
     } catch (error) {
       if (this.importController !== controller || controller.signal.aborted) return;
       controller.abort();
@@ -442,7 +442,7 @@ class InputNameForFinding extends React.Component {
 
 			</div>
 			<Typography variant="caption" component="p" className="toolbar-hint">
-				После загрузки укажите навыки, клановые артефакты, благословения и активные эликсиры вручную.
+				После загрузки укажите навыки, клановые артефакты, благословения, голема и активные эликсиры вручную.
 			</Typography>
 			<div className = 'col-12 toolbar-status' > {
 				this.state.loading && < LinearProgress / >
