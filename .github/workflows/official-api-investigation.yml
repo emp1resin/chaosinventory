@@ -36,6 +36,15 @@ jobs:
       - name: Build for GitHub Pages without publishing
         run: npm run build -- --base /chaosinventory/
         working-directory: site-source
+      - name: Install isolated browser test runner
+        run: |
+          npm install --prefix /tmp/chaosinventory-browser-qa --no-package-lock --no-save playwright@1.62.1
+          node /tmp/chaosinventory-browser-qa/node_modules/playwright/cli.js install --with-deps chromium
+      - name: Verify UI with recorded live data and simulated network failures
+        run: node scripts/test-browser-import.mjs
+        working-directory: site-source
+        env:
+          PLAYWRIGHT_MODULE: /tmp/chaosinventory-browser-qa/node_modules/playwright/index.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:

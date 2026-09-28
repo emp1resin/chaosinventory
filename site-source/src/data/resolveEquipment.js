@@ -18,7 +18,7 @@ export function resolveEquippedItems(profileThings, instances, catalog) {
     if (!instance?.name) return; // The empty-slot labels from the profile remain.
     const originalId = String(instance.original_id || instance.id || '');
     const base = byId.get(originalId);
-    if (base) resolved[profileSlot] = base;
+    if (base) resolved[profileSlot] = JSON.parse(JSON.stringify(base));
     else missing.push({slot: profileSlot, name: instance.name, originalId});
   });
 
