@@ -1,29 +1,59 @@
+const gameBridge = 'https://chaosinventory-data.emp1res1n.chatgpt.site/api/game-json';
+const namedRequests = new Set(['user_equipment_list', 'user_fraction', 'clan_list_by_user_name']);
+
+function bridgeUrlFor(url) {
+	const source = new URL(url);
+	if (source.origin !== 'https://chaosage.ru' || source.pathname !== '/sAPI2.php') return null;
+	const request = source.searchParams.get('request');
+	const target = new URL(gameBridge);
+	if (namedRequests.has(request)) {
+		target.searchParams.set('user_name', source.searchParams.get('user_name') || '');
+	} else if (request === 'equipment_info') {
+		target.searchParams.set('id', source.searchParams.get('id') || '');
+	} else return null;
+	target.searchParams.set('request', request);
+	return target.toString();
+}
+
+async function requestJson(url, timeoutMs) {
+	const controller = new AbortController();
+	const timeout = setTimeout(() => controller.abort(), timeoutMs);
+	try {
+		const response = await fetch(url, {signal: controller.signal});
+		if (!response.ok) throw new Error(`HTTP ${response.status}`);
+		const body = await response.text();
+		return body ? JSON.parse(body) : null;
+	} finally {
+		clearTimeout(timeout);
+	}
+}
+
 export async function fetchGameJson(url) {
-	let lastError
-	for (let attempt = 0; attempt < 2; attempt++) {
-		const controller = new AbortController()
-		const timeout = setTimeout(() => controller.abort(), 15000)
+	const bridge = bridgeUrlFor(url);
+	try {
+		return await requestJson(url, bridge ? 7000 : 15000);
+	} catch (directError) {
+		if (bridge) {
+			try {
+				return await requestJson(bridge, 15000);
+			} catch (bridgeError) {
+				throw new Error(`Игровые данные недоступны ни напрямую, ни через резервный сервер: ${bridgeError.message}`);
+			}
+		}
+		await new Promise(resolve => setTimeout(resolve, 350));
 		try {
-			const response = await fetch(url, {signal: controller.signal})
-			if (!response.ok) throw new Error(`${response.status} ${response.statusText}`)
-			const body = await response.text()
-			return body ? JSON.parse(body) : null
-		} catch (error) {
-			lastError = error
-			if (attempt === 0) await new Promise(resolve => setTimeout(resolve, 350))
-		} finally {
-			clearTimeout(timeout)
+			return await requestJson(url, 15000);
+		} catch (retryError) {
+			throw new Error(`Игровой API не ответил: ${url.split('?')[0]} (${retryError.message || directError.message})`);
 		}
 	}
-	throw new Error(`Игровой API не ответил: ${url.split('?')[0]} (${lastError?.message || 'ошибка сети'})`)
 }
 
 export async function fetchOptionalGameJson(url) {
 	try {
-		return await fetchGameJson(url)
+		return await fetchGameJson(url);
 	} catch (error) {
-		console.warn('Дополнительные данные временно недоступны', error)
-		return null
+		console.warn('Дополнительные данные временно недоступны', error);
+		return null;
 	}
 }
-

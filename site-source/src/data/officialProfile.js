@@ -89,7 +89,12 @@ export async function fetchCharacterProfile(name) {
     if (profile?.out) return { profile, fallback: false };
     throw new Error('Пустой ответ');
   } catch (primaryError) {
-    const response = await fetch(`${profileBridge}?name=${encodeURIComponent(nick)}`);
+    let response;
+    try {
+      response = await fetch(`${profileBridge}?name=${encodeURIComponent(nick)}`);
+    } catch (bridgeError) {
+      throw new Error(`Не удалось получить профиль ни из игры, ни через резервный сервер (${bridgeError.message}).`);
+    }
     if (!response.ok) {
       const detail = await response.json().catch(() => ({}));
       throw new Error(`Не удалось загрузить персонажа через запасной источник: ${detail.error || response.status}`);

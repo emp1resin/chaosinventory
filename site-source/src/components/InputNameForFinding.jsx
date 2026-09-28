@@ -55,11 +55,7 @@ async function normalizeBreachRune(item) {
 	try {
 		if (!breachRuneApiCache.has(rawCode)) {
 			breachRuneApiCache.set(rawCode,
-				fetch(`https://chaosage.ru/sAPI2.php?id=${rawCode}&request=equipment_info`)
-					.then(response => {
-						if (!response.ok) throw new Error(`Руна Разлома ${rawCode}: ${response.status}`)
-						return response.json()
-					})
+				fetchGameJson(`https://chaosage.ru/sAPI2.php?id=${rawCode}&request=equipment_info`)
 			)
 		}
 		const runeInfo = await breachRuneApiCache.get(rawCode)
@@ -351,7 +347,7 @@ class InputNameForFinding extends React.Component {
 
 
 		// Загружаем список вещей и некоторые параметры игрока своим парсером
-		fetchCharacterProfile(x)
+		fetchCharacterProfile(x).catch(error => { throw new Error(`Профиль персонажа: ${error.message}`) })
 			.then(({profile: jsonData, fallback}) => {
 				if (!jsonData.out) throw new Error('Персонаж не найден.');
 
@@ -366,7 +362,7 @@ class InputNameForFinding extends React.Component {
 						: fetchOptionalGameJson(urls[0]),
 					fetchOptionalGameJson(urls[1]),
 					fetchOptionalGameJson(urls[2]),
-					fetchGameJson(urls[3]),
+					fetchGameJson(urls[3]).catch(error => { throw new Error(`Список экипировки: ${error.message}`) }),
 				])
 					.then(result => {
 						if (!result[3] || typeof result[3] !== 'object') {
@@ -425,7 +421,14 @@ class InputNameForFinding extends React.Component {
 					  `https://chaosage.ru/sAPI2.php?id=${secondJsonData.listOfThings.ring2}&request=equipment_info`,
 					  `https://chaosage.ru/sAPI2.php?id=${secondJsonData.listOfThings.armor}&request=equipment_info`,
 					]
-						return Promise.all(urls2.map(url => fetchGameJson(url)))
+						const slots = ['наручи', 'перчатки', 'оружие', 'пояс', 'ботинки', 'шлем', 'амулет', 'вторая рука', 'левое кольцо', 'правое кольцо', 'доспех'];
+						return Promise.all(urls2.map((url, index) => {
+							const id = new URL(url).searchParams.get('id');
+							if (!id || id === 'undefined' || id === 'null' || id === '0') return null;
+							return fetchGameJson(url).catch(error => {
+								throw new Error(`Вещь в слоте «${slots[index]}» (#${id}): ${error.message}`);
+							});
+						}))
 							.then(items => Promise.all(items.map(normalizeBreachRune)))
 							.then(result => {
 
