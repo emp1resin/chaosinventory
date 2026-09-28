@@ -1,0 +1,20 @@
+name: Network investigation (no deployment)
+on:
+  pull_request:
+    paths:
+      - 'site-source/scripts/audit-network.mjs'
+      - 'site-source/scripts/test-network-failures.mjs'
+      - '.github/workflows/network-audit.yml'
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Read-only network and CORS checks
+        run: node site-source/scripts/audit-network.mjs
