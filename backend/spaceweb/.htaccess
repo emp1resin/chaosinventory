@@ -1,0 +1,3 @@
+Options -Indexes
+RewriteEngine On
+RewriteRule ^(health|api/(profile-html|avatar-rating-html|clan-rating-html|game-json|bug-report))$ index.php [QSA,L]
